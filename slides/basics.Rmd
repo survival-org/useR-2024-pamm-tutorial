@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font150[
-**Qauntifying duration time distributions**
+**Quantifying duration time distributions**
 ]
 ]
 
@@ -80,7 +80,10 @@ f(t)
 \end{align}$$
 
 
----
+<!-- TODO: censoring, likelihood under censoring -->
+
+<!-- --- -->
+<!--
 # Proofs
 
 $$\begin{align*}
@@ -91,9 +94,11 @@ h(t)  &= \lim_{\Delta t\searrow 0} \frac{1}{\Delta t} P(t\leq T<t+\Delta t\,|\,T
             &= \underbrace{\lim_{\Delta t\searrow 0}\frac{F(t+\Delta t)-F(t)}{\Delta t}}_{f(t)}\cdot \frac{1}{S(t)} \\
            & =\frac{f(t)}{S(t)}
 \end{align*}$$
+-->
 
 
----
+<!-- --- -->
+<!--
 # Proofs (2)
 
 $$\begin{align*}
@@ -104,8 +109,10 @@ $$\begin{align*}
  \Leftrightarrow  S(t) & =\exp\left(-H(t)\right)\\[2em]
  f(t)        &=\frac{dF(t)}{dt}=\frac{d(1 - S(t))}{dt}=-\frac{d}{dt} S(t)
 \end{align*}$$
+-->
 
----
+<!-- --- -->
+<!-- 
 # Decomposition of Survival Function
 
 We can decompose the survival function in a multiplicative manner.
@@ -118,3 +125,4 @@ H(\tilde{t}) - H(t)          &= - \log(S(\tilde{t})) - (-\log(S(t))) = \log(S(t)
 \exp(-[H(\tilde{t}) - H(t)]) &= \frac{S(\tilde{t})}{S(t)},\ \text{or}\\
 S(\tilde{t})                 &= S(t)\exp(-[H(\tilde{t})-H(t)])
 \end{align*}$$
+-->

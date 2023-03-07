@@ -15,8 +15,82 @@ class: inverse, middle, center
 
 
 ---
-# First slide
 
+# Time-Varying Effects
+
+The effect of a covariate $x$ can change as time progresses
+
+Examples:
+
+- effect of patients' status at admission to the hospital vanishes over time,
+- whether a tool is made with cheap or high-quality materials begins to affect its risk of failure only after it has been used for a certain amount of time.
+
+**Model for one covariate**
+$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$ 
+
+Note that the proportional hazard assumption is no longer fulfilled since
+$$\frac{h(t | x)}{h(t | x + 1)} = \exp(\beta(t)):$$ 
+$\implies$ The hazard ratio becomes a function of time.
 
 ---
-# Slide 2
+# Modelling Time-Varying Effects: Idea
+
+Main idea:  
+Define *artificial time-dependent covariates* and fit the model with time-dependent covariates.
+
+Specifically:  
+$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)\ ,$$ with basis functions
+depending on t:
+$$h(t |x_i)= h_0(t)\exp\bigg(x_i \sum_\ell \gamma_\ell B_\ell(t)\bigg)=h_0(t)\exp\bigg(\sum_\ell \gamma_\ell (x_i B_\ell(t))\bigg).$$
+$\implies$ coefficients $\gamma_\ell$ for time-dependent covariates $x B_\ell(t)$ can be estimated as usual
+
+---
+# Modelling Time-Varying Effects (1)
+
+Examples:
+
+- $L=1, B_1(t) \equiv 1$: time-constant effect
+- $L=1, B_1(t) = \log(1 + t)$: logarithmic increase/decrease over time
+
+Much more flexible & fairly assumption-free:  
+- Use $L \gg 1$ 
+- Use spline basis functions for $B_\ell(t)$
+- Penalize $\gamma_\ell$
+
+---
+# Modelling Time-Varying Effects (2)
+
+$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)$$
+
+- **Very** easy to include in PAMMs since we already include time $t$ as a covariate for the baseline hazard
+- Time-varying linear effects $x\beta(t)$ simply specified as spline interaction effect `s(<TIME>, by = <X>)` 
+- Non-linear time-varying effects $f(x, t)$ specified as tensor product splines `te(<TIME>, <X>)`
+
+Technical point:  
+- PAMMs assume piece-wise constant hazard rates, so $\beta(t)$ actually modelled as a *step function* that only changes at cutpoints $a_j$:  
+$\beta(t) \equiv \sum^L_{\ell=1} \gamma_\ell B_\ell(a_{j})\; \forall\, t \in (a_{j-1}, a_j]$
+-  for data created with `as_ped`, `tend` is $a_j$:  use `s(tend, by = <X>)`
+
+---
+# Stratification: Time-varying Effects of Factors
+
+$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
+
+If $x_i$ is a dummy variable for a level of a categorical variable, 
+this model is approximately equivalent to a *stratified* PH model with a
+different "baseline" hazard for the category encoded by $x_i$. 
+
+- PAMM formula specification `strata + s(tend, by = strata)` with a factor variable `strata` yields different (baseline) hazard rates for each level of `strata`
+- See `?mgcv::gam.models` and `?mgcv::factor.smoooth` for alternative penalization and centering schemes if `strata` has many levels.
+
+---
+# Testing for Proportional Hazards / Time-Varying Effects
+
+We can test the proportional hazards assumption with regard to specific covariates by checking for statistically significant time-varying effects:
+
+$$h(t|x)=h_0(t) \exp(\beta_1 x+ \beta_2(t) x)$$ with $\beta_2(t) = \sum_\ell B_\ell(t)\gamma_\ell$
+
+Check for $\beta_2(t) \equiv 0$ with $H_0: \gamma_\ell = 0 \,\forall\, \ell$
+
+<!-- TODO: example -->
+
