@@ -22,7 +22,7 @@ class: inverse, middle, center
 ]
 
 In the Competing Risks setting
-- we are interested in multiple events, e.g. a patient may die from different causes
+- we are interested in multiple, mutually exclusive, events, e.g. a patient may die from different causes
 - $0$ transient state; $1,\ldots,K$ absorbing states
 
 
@@ -202,5 +202,5 @@ ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
 
 --
 - Pneumonia reduces the hazard for Discharge $\rightarrow$ subjects admitted with pneumonia stay on ICU longer
-- While they are in the ICU, the are exposed to an unchanged hazard for death
+- While they are in the ICU, they are exposed to an unchanged hazard for death
 - As a consequence more patients with pneumonia die than patients without pneumonia
