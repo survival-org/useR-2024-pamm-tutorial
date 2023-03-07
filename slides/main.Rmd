@@ -42,15 +42,20 @@ Compiled: `r Sys.Date()`
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
 ```
 
-```{r input-pem, child = "pem.Rmd", eval = TRUE}
+```{r input-pem, child = "pem.Rmd", eval = TRUE}  
+```
+
+<!--simple ex-->
+
+```{r tdc, child = "time-dependent-covariates.Rmd", eval = TRUE}
 ```
 
 ```{r tve, child = "time-varying-effects.Rmd", eval = TRUE}
 ```
 
-```{r tve, child = "time-dependent-covariates.Rmd", eval = TRUE}
-```
+<!-- time-dep ex-->
 
+<!-- lunch -->
 
 ```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE}
 ```
@@ -60,6 +65,8 @@ Compiled: `r Sys.Date()`
 
 ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
 ```
+
+<!-- ex --> 
 
 <!-- Bibliography -->
 ```{r input-references, child = "references.Rmd", eval = TRUE}

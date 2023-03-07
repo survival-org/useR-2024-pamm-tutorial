@@ -24,7 +24,7 @@ where the baseline hazard is written as $g_0(t) = \log h_0(t)$. <br>
 We now want to estimate both $h_0(t)$ as well as the parameters
 $\bsbeta$ via ML.
 
-We again decompose the time axis into $J$ intervals, using cut points $a_0, a_1, \ldots, a_J$:
+We decompose the time axis into $J$ intervals, using cut points $a_0, a_1, \ldots, a_J$:
 $$(0=a_0,a_1],(a_1,a_2],\ldots,(a_{j-1},a_j],\ldots,(a_{J-1},a_J]$$
 These interval cut points will often correspond to event and/or censoring times, but don't need to.
 
@@ -227,6 +227,7 @@ $\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
 $\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$,
 $\quad t_j := a_j$
 
+- also known as "start-stop" data format, used for interval-censoring and time-varying covariates in PH models 
 
 ---
 # PEM Likelihoood (2)
@@ -279,7 +280,7 @@ $\ra$ We can fit a Poisson model to the pseudo-data to obtain ML estimates of $\
 In general
   - Number of baseline parameters to estimate equal to $J$
   - Number and placement of cut points $a_j, j=1,\ldots,J$ important for fit
-  - If no ties in the data, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
+  - If no ties in the data and cut points equal event times, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
 
 
 ---
@@ -304,7 +305,7 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 **Solution**:
 - large $J$, penalize differences between neighboring baseline hazards $\beta_{0j}, \beta_{0j'}$ and/or
 
-- reduction of parameter dimension by *basis function representation* of $h_0(t)$.
+- reduce parameter count by *basis function representation* of $h_0(t)$.
 
 
 
@@ -365,3 +366,5 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 - Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still depends on $J$ to some degree) <br>
 - PEMs and PAMMs in **R** facilitated by package **`pammtools`** <br>
 - Various articles (vignettes) on different topics available here: https://adibender.github.io/pammtools/articles/
+
+<!-- add tumor example, show add_hazard etc -->
