@@ -279,7 +279,7 @@ $\ra$ We can fit a Poisson model to the pseudo-data to obtain ML estimates of $\
 In general
   - Number of baseline parameters to estimate equal to $J$
   - Number and placement of cut points $a_j, j=1,\ldots,J$ important for fit
-  - If no ties in the data, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
+  - If no ties in the data and cut points equal event times, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
 
 
 ---
