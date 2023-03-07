@@ -52,7 +52,7 @@ Compiled: `r Sys.Date()`
 ```
 
 
-```{r left-truncation, child = "left-truncation.Rmd"}
+```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE}
 ```
 
 ```{r input-recurrent, child = "recurrent-events.Rmd", eval = TRUE}
