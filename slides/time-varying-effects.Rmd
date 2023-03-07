@@ -15,4 +15,51 @@ class: inverse, middle, center
 
 
 ---
-# First slide
+# Time-Varying Effects
+
+The effect of a covariate $x$ can change as time progresses
+
+Examples:
+
+- effect of patients' status at admission to the hospital vanishes over time,
+- whether a tool is made of cheap or high-quality material only affects risk of failure after it's been used for a certain amount of time.
+
+**Model for one covariate**
+$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$ 
+
+Note that the proportional hazard assumption is no longer fulfilled since
+$$\frac{\lambda(t,x)}{\lambda(t,x+1)} = \exp(\beta(t)):$$ 
+$\implies$ The hazard ratio becomes a function of time.
+
+---
+# Modelling Time-Varying Effects: Idea
+
+Main idea:  
+Define *artificial time-dependent covariates* and fit the model with time-dependent covariates.
+
+Specifically:  
+$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)\ ,$$ with basis functions
+depending on t:
+$$h(t |x_i)= h_0(t)\exp\bigg(x_i \sum_\ell \gamma_\ell B_\ell(t)\bigg)=\lambda_0(t)\exp\bigg(\sum_\ell \gamma_\ell (x B_\ell(t))\bigg).$$
+$\implies$ $\gamma_\ell$ for time-dependent covariates $x B_\ell(t)$ can be estimated via **TODO**
+
+---
+# Modelling Time-Varying Effects: Examples
+
+Examples:
+
+- $L=1, B_1(t) \equiv 1$: time-constant effect
+- $L=1, B_1(t) = \log(1 + t)$: logarithmically increasing/decreasing effect over time
+- Flexible & assumption-free: use (penalized) splines
+
+---
+# Testing for Proportional Hazards
+
+We can test the proportional hazards assumption with regard to specific covariates by checking for statistically significant time-varying effects:
+
+$$\lambda (t|x)=\lambda_0(t) \exp(\beta_1 x+ \beta_2(t) x)$$ with $\beta_2(t) = \sum_j B_j(t)\gamma_j$
+
+Check for $\beta_2(t) \equiv 0$ with $H_0: \gamma_j = 0 \,\forall\, j$
+
+<!-- TODO: example -->
+

@@ -47,17 +47,18 @@ Compiled: `r Sys.Date()`
 
 <!--simple ex-->
 
-```{r tve, child = "time-varying-effects.Rmd", eval = TRUE}
+```{r tve, child = "time-dependent-covariates.Rmd", eval = TRUE}
 ```
 
-```{r tve, child = "time-dependent-covariates.Rmd", eval = TRUE}
+```{r tve, child = "time-varying-effects.Rmd", eval = TRUE}
 ```
 
 <!-- time-dep ex-->
 
 <!-- lunch -->
 
-```{r left-truncation, child = "left-truncation.Rmd"}
+
+```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE}
 ```
 
 ```{r input-recurrent, child = "recurrent-events.Rmd", eval = TRUE}

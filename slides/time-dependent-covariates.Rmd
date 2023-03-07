@@ -15,4 +15,50 @@ class: inverse, middle, center
 
 
 ---
-# First slide
+# Time-Dependent Covariates
+
+If a covariate $x$ changes over time $t$, the hazard rate becomes
+$$h(t | x_i(t))=h_0(t)\exp(x_i(t)\beta).$$ 
+
+Note that the resulting model **does not have proportional hazards**, since
+$$\frac{\lambda(t, x_1(t))}{\lambda(t, x_2(t))}=\exp((x_1(t)-x_2(t))'\beta)$$
+depends on $t$.
+
+---
+# Time-Dependent Covariates: Likelihood
+
+PAMMs assume piecewise-constant hazard rate  
+$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $a_{j-1}< t \leq a_{j}$  
+$\implies$ need to include all times at which $x_i$ changes for any $i$ as cut points.
+
+Log-likelihood becomes 
+
+$$\begin{align*}
+l(h(t), \beta) &= \sum_{i=1}^{n} \delta_i \log \{h_0(t_i)\exp(x_i'(t_i)\beta)\} - \int_{0}^{t_i} \lambda_0(u) \exp (x_i' (u)\beta)du\\  
+\intertext{Let $t_{(1)},\hdots,t_{(m)}$ be the time points with events and
+$R_{i}$ the risk set at time point $t_{(i)}$.}
+\implies \quad
+Pl(\beta) &= \sum_{i=1}^{m}x_{(i)(i)}'\beta-\log \left(\sum_{j \in R_{i}}\exp(x_{ji}'\beta) \right)
+\label{time_var_lik}
+\end{align*}$$
+
+with $x_{ji}=x_j(t_{i}) \text{ and } x_{(i)(i)}=x_{(i)}(t_{(i)}).$
+
+---
+# Time-Dependent Covariates: Data Format
+
+For a time-dependent covariate, we need to prepare the data set in "start-stop" format: 
+
+$$\begin{matrix}
+\delta & t_{start} & t_{stop} & x_{ji} \\ \hline
+0 & 0 & t_{(1)} & x_{j1} \\
+0 & t_{(1)} & t_{(2)} & x_{j2} \\
+\vdots & \vdots & \vdots  & \\
+\delta_j & t_{(i_j -1)} & t_j & x_{ji_j}
+\end{matrix}$$ 
+
+- If any $x_i(t)$ change at timepoints $\notin \{t_{(i)}: i= 1,\dots,m\}$, we need to add these times to the set as well.
+- $t_{(i_j -1)}$ is the last event- or change-timepoint before $t_j$
+- R functions:  `survival::survSplit`, `survival::tmerge` 
+- Computational effort for Cox PH models becomes a lot larger.
+- "start-stop" data format is also used for interval-censored and left-truncated data.
