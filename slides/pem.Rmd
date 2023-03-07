@@ -227,6 +227,7 @@ $\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
 $\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$,
 $\quad t_j := a_j$
 
+- also known as "start-stop" data format, used for interval-censoring and time-varying covariates in PH models 
 
 ---
 # PEM Likelihoood (2)
@@ -304,7 +305,7 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 **Solution**:
 - large $J$, penalize differences between neighboring baseline hazards $\beta_{0j}, \beta_{0j'}$ and/or
 
-- reduction of parameter dimension by *basis function representation* of $h_0(t)$.
+- reduce parameter count by *basis function representation* of $h_0(t)$.
 
 
 
