@@ -15,7 +15,7 @@ class: inverse, middle, center
 
 
 ---
-# Time-Dependent Covariates
+# Time-Dependent Covariates (TDCs)
 
 If a covariate $x$ changes over time $t$, the hazard rate becomes
 $$h(t | x_i(t))=h_0(t)\exp(x_i(t)\beta).$$ 
@@ -25,40 +25,168 @@ $$\frac{\lambda(t, x_1(t))}{\lambda(t, x_2(t))}=\exp((x_1(t)-x_2(t))'\beta)$$
 depends on $t$.
 
 ---
-# Time-Dependent Covariates: Likelihood
-
-PAMMs assume piecewise-constant hazard rate  
-$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $a_{j-1}< t \leq a_{j}$  
-$\implies$ need to include all times at which $x_i$ changes for any $i$ as cut points.
-
-Log-likelihood becomes 
-
-$$\begin{align*}
-l(h(t), \beta) &= \sum_{i=1}^{n} \delta_i \log \{h_0(t_i)\exp(x_i'(t_i)\beta)\} - \int_{0}^{t_i} \lambda_0(u) \exp (x_i' (u)\beta)du\\  
-\intertext{Let $t_{(1)},\hdots,t_{(m)}$ be the time points with events and
-$R_{i}$ the risk set at time point $t_{(i)}$.}
-\implies \quad
-Pl(\beta) &= \sum_{i=1}^{m}x_{(i)(i)}'\beta-\log \left(\sum_{j \in R_{i}}\exp(x_{ji}'\beta) \right)
-\label{time_var_lik}
-\end{align*}$$
-
-with $x_{ji}=x_j(t_{i}) \text{ and } x_{(i)(i)}=x_{(i)}(t_{(i)}).$
-
----
 # Time-Dependent Covariates: Data Format
 
-For a time-dependent covariate, we need to prepare the data set in "start-stop" format: 
+PAMMs assume piecewise-constant hazard rate  
+$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $a_{j-1} < t \leq a_{j}$  
+$\implies$ include all times at which $x_i$ changes for any $i$ as cut points
 
-$$\begin{matrix}
-\delta & t_{start} & t_{stop} & x_{ji} \\ \hline
-0 & 0 & t_{(1)} & x_{j1} \\
-0 & t_{(1)} & t_{(2)} & x_{j2} \\
-\vdots & \vdots & \vdots  & \\
-\delta_j & t_{(i_j -1)} & t_j & x_{ji_j}
-\end{matrix}$$ 
+- `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates
 
-- If any $x_i(t)$ change at timepoints $\notin \{t_{(i)}: i= 1,\dots,m\}$, we need to add these times to the set as well.
-- $t_{(i_j -1)}$ is the last event- or change-timepoint before $t_j$
-- R functions:  `survival::survSplit`, `survival::tmerge` 
-- Computational effort for Cox PH models becomes a lot larger.
-- "start-stop" data format is also used for interval-censored and left-truncated data.
+- Computational effort for Cox PH models becomes a *lot* larger in start-stop format, remains unchanged for PAMMs.
+- "Start-stop" data format is also used for interval-censored and left-truncated data, c.f. `survival::survSplit`, `survival::tmerge`
+
+
+---
+# Example: Primary Biliary Cirrhosis
+
+.pull-left[ 
+`survival::pbc`:
+```{r pbc-1, echo = FALSE}
+data("pbc", package = "survival")
+head(survival::pbc)[, c(1:5, 11, 12)] |> knitr::kable()
+```
+]
+.pull-right[ 
+`survival::pbcseq`:  
+```{r pbc-2, echo = FALSE}
+head(survival::pbcseq)[, c(1, 4:5, 7, 12, 18)] |> knitr::kable()
+```
+]
+
+---
+# Example: Primary Biliary Cirrhosis (2)
+
+Data transformation using `as_ped` function with formula special `concurrent`:
+
+```{r pbc-3, echo = TRUE}
+pbc_clean <- pbc  |>  
+  mutate(status = 1L * (status == 2)) |>
+  filter(id <= 312) |>  select(id:sex) 
+pbc_seq <- pbcseq |>  
+  mutate(log_bili = log(bili), log_protime = log(protime)) |>  
+  select(id, day, log_bili, log_protime)  
+pbc_ped <- as_ped(
+  data = list(pbc_clean, pbc_seq), #!!
+  formula = Surv(time, status) ~ . + concurrent(log_bili, log_protime, tz_var = "day"), #!!
+  id = "id")
+glimpse(pbc_ped)
+```
+
+---
+# Example: Primary Biliary Cirrhosis (4)
+
+.pull-left[ 
+`pbcseq`:  
+```{r pbc-2b, echo = FALSE}
+head(pbc_seq) |> knitr::kable()
+```
+]
+
+.pull-right[ 
+`pbc_ped[49:54, ]` via `pammtools::as_ped`:  
+```{r pbc-4, echo = FALSE}
+pbc_ped[49:54, -c(4, 5)] |> knitr::kable(row.names = FALSE)
+```
+]
+
+---
+# Instantaneous and delayed effects of TDCs
+
+Default is *concurrent* or instantaneous effect:  
+
+- covariate value $x_i(t)$ observed at $t = a_j$ instantaneously affects the
+hazard starting from interval $(a_j, a_{j+1}]$ until the next change in $x$ or end of follow-up. 
+
+*Lagged* effects:
+
+- use  `lag` argument in `concurrent` to specify time-delayed effect of $x_i(t)$
+- covariate value $x_i(t)$ observed at $t = a_j$ affects the
+hazard starting from later interval $(a_j + \texttt{lag}, \ldots]$ until the next (lagged) change in $x$ or end of follow-up.
+
+Much more generally, **pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs, so called
+exposure-lag response associations (ELRA, `r Citet(bib, "bender_penalized_2019")`)
+
+---
+# Extended Cox analysis of the `pbc` data
+```{r pbc-cox1, echo = TRUE}
+# code adapted from vignette("timedep", package="survival")
+temp <- subset(pbc_clean, select = c(id:sex)) # baseline
+pbc2 <- survival::tmerge(temp, temp, id = id, death = event(time, status)) #set range
+pbc2 <- survival::tmerge(pbc2, pbc_seq, id = id, log_bili = tdc(day, log_bili),
+  log_protime = tdc(day, log_protime))
+```
+.pull-left[ 
+Use baseline measurements only:
+```{r pbc-cox2, echo = TRUE}
+fit1 <- coxph(Surv(time, status == 2) ~ 
+                log(bili) + log(protime), 
+              data = subset(pbc, id <= 312))
+cbind(coef(fit1), confint(fit1)) |> exp() |> kable()
+```
+]
+.pull-right[ 
+Use all measurements:
+```{r pbc-cox3, echo = TRUE}
+fit2 <- coxph(Surv(tstart, tstop, death == 1) ~ 
+                log_bili + log_protime, 
+              data = pbc2)
+cbind(coef(fit2), confint(fit2)) |> exp() |> kable()
+```
+]
+.center[
+$\implies$ substantial differences
+]
+---
+# PAM analysis of the `pbc` data
+Fit `PEM`-model using `glm`:
+
+```{r pbc-pam, echo  =TRUE, eval = TRUE, cache= TRUE}
+pbc_pam <- mgcv::gam(ped_status ~ s(tend) + log_bili + log_protime, data = pbc_ped,
+  family = poisson(), offset = offset)
+summary(pbc_pam)
+
+coef(pbc_pam)[2:3]
+coef(fit2)
+```
+
+---
+# PAM analysis of the `pbc` data (2)
+Coefficient estimates are similar, especially for the
+effect of `bili`:
+```{r pbc-fig-prep,  fig.keep="none"}
+## Effect of bilirubin
+# note that we use the reference argument to calculate
+# the relative risk change (x - \bar{x})'\beta for comparison with predict.coxph
+# (see also Details section in ?predict.coxph)
+reference = sample_info(pbc_ped)
+bili_df <- pbc_ped %>% ungroup() %>%
+  make_newdata(log_bili = seq_range(log_bili, n = 100)) %>%
+  add_term(pbc_pam, term = "log_bili", reference = reference) %>%
+  mutate(cox = predict(fit2, ., type = "term")[, "log_bili"])
+
+## Effect of protime
+protime_df <- pbc_ped %>% ungroup() %>%
+  make_newdata(log_protime = seq_range(log_protime, n=100)) %>%
+  add_term(pbc_pam, term = "log_protime", reference = reference) %>%
+  mutate(cox = predict(fit2, ., type = "term")[, "log_protime"])
+
+# visualization
+# remember that bili and protime are log transformed
+p_term <- ggplot(data = NULL, aes(y = fit)) + geom_line(aes(col = "PAM")) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+  geom_line(aes(y = cox, col = "Cox")) +
+  scale_colour_manual(name = "Method", values = c("#E41A1C", "#000000"))
+gridExtra::grid.arrange(
+  p_term %+% bili_df + aes(x = exp(log_bili)) + xlab("Bilirubin") + ylab("ln(HR)"),
+  p_term %+% protime_df + aes(x = exp(log_protime))+ xlab("Protime") + ylab("ln(HR)") + 
+    labs(caption = "vertical axis shows ln(HR) compared to sample average"),
+  nrow = 1L)
+```
+
+```{r pbc-fig, echo = FALSE, fig.width = 6, fig.height = 3}
+gridExtra::grid.arrange(
+  p_term %+% bili_df + aes(x = exp(bili)),
+  p_term %+% protime_df + aes(x = exp(protime)),
+  nrow = 1L)
+```
