@@ -46,131 +46,43 @@ $$T = \min(T_1,T_2), E = 1 \iff T_1 < T_2$$
 ---
 # Cause-Specific Hazards
 
-We define $T$ as the time to an event
-$E \in \{1,\ldots,K\}$.
+We define $T$ as the time to an event $E \in \{1,\ldots,K\}$.
 
 The cause-specific hazards are
 $$h_e(t) = \lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}, \; e = 1, \dots, K.$$
-This defines a joint distribution of $T$ and $E$.
 
-The cause-specific cumulative hazard is defined as
-$$H_e(t) = \int^t_0 h_e(s)ds \ .$$
+From the cause specific hazards, we can derive the **cumulative incidence function (CIF)** (gives the probability of experiencing event $E = e$ before time $t$)
+$$F_e(t) = P(T \leq t, E = e) = \int_0^t h_e(u) S(u)\ du,$$
 
----
-# Marginal Hazard
+using:
+- cause specific cumulative hazard: $H_e(t) = \int^t_0 h_e(s)ds$
+- all cause hazard: $h(t) = \sum_{e=1}^{K} h_e(t)$
+- all cause cumulative hazard: $H(t) = \sum_{e=1}^{K} H_e(t)$
+- all cause survival probability: $S(t) = \exp(-H(t))$
 
-The marginal hazard of $T$ is
-$$h(t) = \sum_{e=1}^K h_e(t) = \sum_{e=1}^K \lim_{\Delta t \to 0}  \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}\ ,$$
-with survival function
-$$S(t) = P(T \geq t) = \exp \Bigl( -H(t) \Bigr)\ ,$$ where
-$$H(t) = \sum_{e = 1}^K \int_0^t h_e(u)\ du = \sum_{e = 1}^K H_e(t)\ .$$
-
-Relationship between event type probabilities and hazard rates:
-
-$$P(E = e | t \leq T \leq t + \Delta t) \approx \frac{h_e(t)}{h(t)}$$
-
-
-
----
-# Cumulative Incidence Function
-
-**CIF $F_e(t)$** denotes the probability of experiencing event $E = e$ before time $t$:
-$$\begin{align*}
-F_e(t) &= P(T \leq t, E = e) = \int_0^t h_e(u) S(u)\ du, \\
-\text{since} &\lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t,\ E = e)}{\Delta t} =
-\lim_{\Delta t \to 0} \frac{P(T \leq t + \Delta t,\ E = e | T \geq t) P(T \geq t)}{\Delta t} = h_e(t) S(t).\\ \text{Let }
-f_e(t) &= F_e'(t) = \left(\int_0^t h_e (u)\ S (u)\ du \right)' = h_e(t)\ S (t).\qquad \text{ (this is not a density!)}\\
-\text{We also have } F(t) &= P(T \leq t) = \sum_{e = 1}^K P(T \leq t, E = e) = \sum_{e = 1}^K F_e(t) \;\text{, i.e., "cumulative incidence",} \\
-\text{and } \pi_e &:= P(E = e) = \lim_{t\to \infty}P(T \leq t, E = e) = F_e (\infty)
-\end{align*}$$
-
-So the cause-specific event time distribution function is
-
-$$P(T \leq t\ |\ E = e) = \frac{P(T \leq t, E = e)}{P(E = e)} = \frac{F_e(t)}{\pi_e}$$
 
 ---
 # Estimation
+The distribution of the observed data is estimated by fitting cause-specific hazards models
+$$h_e(t|\bfx_i) = h_{0e}(t) \exp(\bfx_i^\top \bsbeta_e)$$
 
-Recall Nelson-Aalen estimator
-$$\hat{H}(t) = \sum_{r:t_{(r)} < t} \frac{d_r}{n_r} = \sum_{s \leq t} \frac{\Delta N(s)}{Y(s)}$$
-with $Y(t)$ the number of individuals at risk just before time point $t$ and $N(t)$ the counting process of events.
+To do so, we define two new status variables, such that
 
-Now, for specific cause $e$:
-$$\hat{H}_e(t) = \sum_{r:t_{(r)} < t} \frac{d_{re}}{n_r} = \sum_{s \leq t} \frac{\Delta N_{0e}(s)}{Y(s)}$$
-with $d_{re}$ the number of type $e$ events at time point $t_{r}$.
+.pull-left[
+.center[
+data set
 
-
-Cumulative hazard for all causes:
-$$\hat{H}(t) = \sum_{e=1}^K \hat{H}_e(t)$$
-
----
-# Estimation (2)
-
-**Aalen-Johansen estimator** of cumulative incidence:
-
-$$\begin{align*}
-\hat{P}(T \leq t, E = e)
-& = \int_0^t \hat{h}_e(s) \hat{S}(s) ds\\
-& = \sum_{r:t_{(r)} \leq t} (\hat{H}_e(t_{(r)}) - \hat{H}_e(t_{(r-1)})) \cdot \hat{P}(T > t_{(r)})\\
-& = \sum_{r:t_{(r)} \leq t} \frac{d_{re}}{n_r} \cdot \underbrace{\hat{P}(T > t_{(r)})}_{\text{Kaplan-Meier estimator}}\\
-\end{align*}$$
-
-<!-- with Kaplan-Meier estimator
-
-$$\hat(P)(T > t_{(r)}) = \prod_{k: t_{(k)} \leq t_{(r)}}(1-\frac{n_k}{d_k})$$
-
- -->
-
----
-# Likelihood
-
-
-$$\begin{align*}
-L &= \prod_{i=1}^{n} f_{E_i}^{\delta_i} (t_i)\ S^{1-\delta_i} (t_i),\\
-\delta_i
-&= \begin{cases}
-  1 & \text{if event } E_i \text{ was observed at } t_i\\
-  0 & \mbox{else}\end{cases}\\
-S(t) &= \exp \Bigl( - \sum_{e=1}^K H_e(t) \Bigr) =
-\prod_{e=1}^K \exp \bigl( -H_e(t)\bigr) = \prod_{e=1}^K G_e(t)
-\end{align*}$$
-
-Caution:
-$1 - G_e(t) = P(T_e \leq t)$ and $F_e(t) = P(T \leq t , E = e)$
-
----
-# Likelihood(2)
-
-With $\delta_{ie} = \delta_i\ I(E_i = e)$
-
-$$\begin{align*}
-L &= \prod_{i=1}^n \left(\prod_{e = 1}^K f_e^{\delta_{ie}}(t_i) \right) \cdot S^{1-\delta_i}(t_i) = \prod_{i=1}^n \left( \prod_{e = 1}^K (h_e(t_i)\ S(t_i))^{\delta_{ie}} \right) \cdot S^{1-\delta_i}(t_i)\\
-&= \prod_{i=1}^n \left(\prod_{e = 1}^K h_e^{\delta_{ie}}(t_i)\right) \cdot  S(t_i) = \prod_{i=1}^n \prod_{e = 1}^K h_e^{\delta_{ie}}(t_i) \cdot G_e(t_i)\\
-&= \prod_{i=1}^n \prod_{e = 1}^K L_{ie} = \prod_{e = 1}^K \prod_{i=1}^n L_{ie}
-\end{align*}$$
-
-
-
----
-# Likelihood(3)
-
-The likelihood contribution $L_e$ is equal to the
-likelihood of a "standard" duration time model with event $E = e$ only, so we can estimate
-the cause-specific hazards separately.
-
-We therefore set
-$$h_e(t|\bfx_i) = h_{0e}(t) \exp(\bfx_i^\top \bsbeta_e)\ .$$
-
----
-# Likelihood(4)
-
-The data set
 $$\begin{array}{llll}
 T\quad & E\quad & \delta\quad & x\\ \hline
 3 & 1 & 1 & x_1\\
 4 & 2 & 1 & x_2\\
 2 & 0 & 0 & x_3\\
 \end{array}$$
+]
+]
+
+.pull-right[
+.center[
 becomes
 
 $$\begin{array}{llllll}
@@ -179,21 +91,116 @@ T & E & \delta & x & \delta_1 & \delta_2 \\ \hline
 4 & 2 & 1 & x_2 & 0 & 1\\
 2 & 0 & 0 & x_3 & 0 & 0\\
 \end{array}$$
+]
+]
 
 
-where the cause-specific hazard estimates for $E = 1$ use a hazard rate model with
-$\delta_1$ and a hazard rate model with $\delta_2$ for $E = 2$.
+where the cause-specific hazard estimates for $e = 1$ use a hazard rate model with
+$\delta_1$ and a hazard rate model with $\delta_2$ for $e = 2$.
 
 
 ---
-# Cause-Specific Proportional Hazard
+# Cause-Specific PAMMs
 
-$$h_e(t|\bfx) = h_{0e}(t) \exp(\bfx^\top\bsbeta_{e})$$
+- data transformation as usual with `as_ped`:
+  + automatically recognizes if status variable has more then 2 unique values
+  + creates one data set per non-censoring event
+  + argument `combine` controls whether the separate data sets are retured as list or stacked into one data set with additional column `cause`
 
-- Cox type model for each cause
-- use partial likelihood for each cause
-- alternative form with cause specific predictors:
-  $$h_{e}(t|\bfx) = h_{0e}(t)\exp(\bfx_{e}^\top\bsbeta_{e})$$
+- fit cause-specific PAMMs to each data set (or jointly w/ interactions of `cause` variable with other predictors, including time)
+$$h_e(t|\bfx) = \exp(g(t, e, \bfx))$$
+
 - interpretation **conditional on *non-occurrence*** of all competing events <br>
   $\implies$ no (direct) inference on CIF, which is often more relevant
-  (Alternative approach: **Fine & Gray Subdistribution Hazards**)
+- however, we can calculate the CIF from the $h_e(t|\bfx), e=1,\ldots, K$
+
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+
+The example follows `r Citet(bib, "beyersmann_competing_2012")`: "Competing Risks and Multistate Models with R"
+
+- 747 ICU patients
+- endpoints:
+  + discharge from the ICU (`status` = 1): competing event
+  + death (`status` = 2): event of interest
+- variable of interest  `pneu`: A patient's pneumonia status at admission (0 = no pneumonia, 1 = pneumonia)
+
+```{r, echo = TRUE}
+data(sir.adm, package = "mvna")
+sir.adm %>% filter(id %in% c(41, 395, 17058))
+table(sir.adm$status)
+sum(sir.adm$status != 0)
+```
+
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+
+Data in PED format:
+
+```{r echo = TRUE}
+ped <- as_ped(sir.adm, Surv(time, status)~ pneu, combine = TRUE) %>%
+  mutate(cause = as.factor(cause))
+dim(ped)
+sum(ped$ped_status)
+```
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+```{r echo = TRUE}
+ped %>%
+  filter(id %in% c(41, 17058)) %>%
+  group_by(id, cause) %>%
+  slice(1, n()) |> kable()
+```
+---
+# Example: Pneumonia on admission in intenive care unit patients
+```{r echo = TRUE, output.lines=c(8:13, 17:20)}
+pam <- pamm(ped_status ~ s(tend, by = cause) + cause*pneu, data = ped)
+summary(pam)
+```
+
+```{r echo = TRUE}
+round(cbind(Discharge = exp(coef(pam)[3]), Death = exp(sum(coef(pam)[3:4]) )), 2)
+```
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+
+- pneumonia doesn't appear to have an effect on the death hazard
+- this does *not* imply that pneumonia has no effect on mortality
+- We want to calculate the CIF to check effect of pneumonia on probability of death
+
+```{r, echo = TRUE}
+ndf <- ped %>% make_newdata(tend  = unique(tend), pneu  = unique(pneu), cause = unique(cause))
+ndf %>% group_by(cause) %>% slice(1:3) |> kable()
+```
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+
+```{r echo = TRUE}
+ndf <- ndf %>%
+  group_by(cause, pneu) %>% # important!
+  add_cif(pam) %>% ungroup() %>%
+  mutate(
+    cause = factor(cause, labels = c("Discharge", "Death")),
+    pneu  = factor(pneu, labels = c("No Pneumonia", "Pneumonia"))
+  )
+```
+
+---
+# Example: Pneumonia on admission in intenive care unit patients
+
+```{r echo = TRUE, fig.width = 8, fig.height = 3, out.width = "600px"}
+# visualization
+ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
+  geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
+  facet_wrap(~cause) + labs(y = "CIF", x = "time", color = "Pneumonia", fill = "Pneumonia")
+```
+
+--
+- Pneumonia reduces the hazard for Discharge $\rightarrow$ subjects admitted with pneumonia stay on ICU longer
+- While they are in the ICU, the are exposed to an unchanged hazard for death
+- As a consequence more patients with pneumonia die than patients without pneumonia
