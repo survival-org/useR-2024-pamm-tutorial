@@ -42,7 +42,7 @@ Compiled: `r Sys.Date()`
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
 ```
 
-```{r input-pem, child = "pem.Rmd", eval = TRUE}
+```{r input-pem, child = "pem.Rmd", eval = TRUE}  
 ```
 
 <!--simple ex-->
@@ -57,15 +57,14 @@ Compiled: `r Sys.Date()`
 
 <!-- lunch -->
 
+<!-- ```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE} -->
+<!-- ``` -->
 
-```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE}
-```
+<!-- ```{r input-recurrent, child = "recurrent-events.Rmd", eval = TRUE} -->
+<!-- ``` -->
 
-```{r input-recurrent, child = "recurrent-events.Rmd", eval = TRUE}
-```
-
-```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
-```
+<!-- ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE} -->
+<!-- ``` -->
 
 <!-- ex --> 
 
