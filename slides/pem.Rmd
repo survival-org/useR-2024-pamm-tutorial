@@ -366,3 +366,5 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 - Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still depends on $J$ to some degree) <br>
 - PEMs and PAMMs in **R** facilitated by package **`pammtools`** <br>
 - Various articles (vignettes) on different topics available here: https://adibender.github.io/pammtools/articles/
+
+<!-- add tumor example, show add_hazard etc -->
