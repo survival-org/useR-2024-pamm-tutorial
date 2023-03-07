@@ -50,7 +50,7 @@ class: inverse, middle, center
 
 ---
 # Schematic
-An examplary schematic of a reccurrent events data set for 5 subjects is shown below (source: `r Citet(bib, "amorim_modelling_2015")`)
+An examplary schematic of a reccurr ent events data set for 5 subjects is shown below (source: `r Citet(bib, "amorim_modelling_2015")`)
 
 .center[
 <img src="figures/recurrent-events-schematic.png", width="400px">
@@ -122,7 +122,7 @@ h_{ik}(t) = h(t|\bfx_i, \bfx_{ik}, {b}_{i})
 
 - $\bfx_{ik}$ are potentially event dependent covariates/interaction terms
 - $\bsbeta$, $\bsbeta_k$ are the fixed coefficients
-- $b_i$ are the random effects
+- $b_i \sim N(0, \sigma_b^2)$ are the random effects
 
 Note that at estimation stage, $t$ is either
   - time since origin (calendar time scale) or
@@ -148,3 +148,99 @@ In both models
     + waiting time of the last event
   - $\bsbeta_k$ are event specific effects, e.g. when hazard depends on past or $\bfx_{ik}$ contains interaction terms of covariates with event number $k$
   - covariate effects can be extended to potentially non-linear, potentially time-varying relationships $f(x_i, x_{ik},t)$ $\rightarrow$ additive models
+
+
+---
+# Recurrent Events Analysis with PAMMs/**`pammtools`**
+See `r Citet(bib, "ramjith.recurrent.2022")` for details
+
+- Data transformation as usual with `as_ped` functions, however
+  + Formula contains information about entry and exit times for risk sets of spefici event number `Surv(start, stop, status)~.`
+  + additional `transition` argument indicates the variable in the data that contains information on event number
+  + additional `timescale` argument indicates whether data should be transformed to gap-time scale or calendar-time scale
+
+
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+- RCT for effect of interferon gamma (treatment) on patients with CGD
+- CGD is an inherited disorder that manifests in recurrent infections (with skin leasons)
+
+```{r, echo = TRUE}
+data("cgd", package = "survival")
+cgd %>% filter(id == 1) %>% select(id, treat, tstart, enum, tstop, status) %>%
+  mutate(gap = tstop - tstart)
+table(cgd$enum)
+```
+
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+Transformation to PED format:
+
+```{r echo = TRUE}
+ped_cgd <- cgd %>%
+  mutate(id = factor(id)) %>% # important for mgcv::gam
+  as_ped(
+    formula = Surv(tstart, tstop, status) ~ treat,
+    id = "id",
+    transition = "enum",
+    timescale = "gap") %>%
+  mutate(enum_strata = factor(ifelse(enum > 2, "3+", enum)))
+ped_cgd %>% filter(id == 1) %>% group_by(enum) %>% slice(1, n())
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+Fitting the model $\lambda(t|b_i) = \exp(\beta_0 + f_0(t) + \beta_1 x_{treat} + \ b_i),$ with
+- $\beta_0 + f_0(t)$: baseline hazard
+- $\beta_1$: treatment effect
+- $b_i \sim N(0, \sigma_{b}^2)$: frailty/random intercept
+
+
+```{r echo = TRUE, output.lines = c(8:11, 15:18)}
+pam_cgd <- pamm(ped_status ~ s(tend) + treat + s(id, bs = "re"), data = ped_cgd)
+summary(pam_cgd)
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+```{r echo = TRUE, fig.width = 5, out.width = "400px", fig.keep = "last"}
+qq_cgd <- gg_re(pam_cgd)
+qq_cgd
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+Fitting the model $\lambda(t|k, b_i) = \exp(\beta_{0k} + f_{0k}(t) + \beta_1 x_{treat} + \ b_i),$ with
+- $\beta_{0k} + f_{0k}$: recurrence specific log baseline hazard
+
+```{r echo = TRUE, output.lines = c(9:15, 19:25)}
+pam_cgd2 <- pamm(ped_status ~ enum_strata + s(tend, by = enum_strata) + treat + s(id, bs = "re"), data = ped_cgd)
+summary(pam_cgd2)
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+Extract predicted survival probabilities per group:
+
+```{r, echo = TRUE}
+ndf_cgd <- ped_cgd %>%
+  make_newdata(tend = unique(tend), enum_strata = unique(enum_strata)) %>%
+  add_hazard(pam_cgd2) %>%
+  group_by(enum_strata) %>% # !!! very important
+  add_surv_prob(pam_cgd2)
+ndf_cgd %>% select(enum_strata, tend, surv_lower, surv_prob, surv_upper) %>%
+  group_by(enum_strata) %>% slice(1, n())
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+```{r echo = TRUE, fig.width = 7, out.width = "600px"}
+ggplot(ndf_cgd, aes(x = tend, y = surv_prob)) +
+  geom_surv(aes(col = enum_strata))
+```

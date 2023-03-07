@@ -10,7 +10,7 @@ output:
     seal: false
     nature:
       ratio: '16:9'
-      highlightStyle: print
+      highlightStyle: zenburn
       highlightLines: true
       countIncrementalSlides: false
       slideNumberFormat: "%current%"
