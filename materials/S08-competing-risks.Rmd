@@ -1,0 +1,140 @@
+---
+title: "Survival Analysis W22/23"
+subtitle: "Competing Risks"
+author: "Andreas Bender"
+---
+
+```{r, message = FALSE}
+library(pammtools)
+library(purrr)
+library(dplyr)
+# visualization
+library(ggplot2)
+theme_set(theme_bw())
+```
+
+```{r, message = FALSE, echo = FALSE, eval = TRUE}
+# references
+library(RefManageR)
+BibOptions(check.entries = FALSE, hyperlink=TRUE, style = "markdown",
+  max.names = 1)
+bib <- ReadBib("../references.bib", check = FALSE)
+options(width = 120)
+library(knitr)
+opts_chunk$set(
+  dev        = "png",
+  dpi        = 500,
+  fig.align  = "center",
+  out.width  = "400px",
+  fig.width  = 5,
+  fig.height = 5,
+  collapse   = TRUE
+  )
+```
+
+
+
+## ICU patients (`sir.adm`)
+
+The example below follows Beyersmann et al. (2008): "Competing Risks and Multistate Models with R"
+
+```{r}
+data(sir.adm, package = "mvna")
+sir.adm %>% filter(id %in% c(41, 395, 17058))
+table(sir.adm$status)
+sum(sir.adm$status != 0)
+```
+
+- 747 ICU patients
+- endpoints:
+  + discharge from the ICU (`status` = 1): competing event
+  + death (`status` = 2): event of interest
+- variable of interest  `pneu`: A patient's pneumonia status at admission (0 = no pneumonia, 1 = pneumonia)
+
+
+## PAM
+
+### Data in PED format
+```{r}
+cut <- unique(sir.adm$time[sir.adm$status != 0])
+ped_list <- as_ped(sir.adm, Surv(time, status)~., combine = FALSE, cut = cut)
+str(ped_list,1)
+ped_list[[1]] %>%
+  filter(id %in% c(41, 395, 17058)) %>%
+  group_by(id) %>% slice(1, n())
+ped_list[[2]] %>%
+  filter(id %in% c(41, 395, 17058)) %>%
+  group_by(id) %>% slice(1, n())
+```
+
+Note that the total number of events between the two data sets doesn't change
+```{r}
+sum(ped_list[[1]]$ped_status, ped_list[[2]]$ped_status)
+```
+
+### Cause-specific hazards (separate models)
+
+```{r}
+pam_list <- map(ped_list, ~pamm(ped_status ~ s(tend) + pneu, data = .x))
+map(pam_list, ~summary(.x))
+map_dfc(pam_list, ~round(exp(coef(.x)["pneu"]), 2))
+```
+
+### Cause-specific hazards (one model)
+
+```{r}
+# combined = TRUE is the default
+ped <- as_ped(sir.adm, Surv(time, status)~., combine = TRUE) %>%
+  mutate(cause = as.factor(cause))
+dim(ped)
+str(ped)
+ped %>%
+  filter(id %in% c(41, 395, 17058)) %>%
+  group_by(id, cause) %>%
+  slice(1, n())
+
+sum(ped$ped_status)
+
+# Fit the model
+pam <- pamm(ped_status ~ s(tend, by = cause) + cause*pneu, data = ped)
+# what would it mean if we fit
+# pamm(ped_status ~ s(tend) + cause* pneu, data = ped)
+summary(pam)
+round(cbind(Discharge = exp(coef(pam)[3]), Death = exp(sum(coef(pam)[3:4]) )), 2)
+```
+
+### Cumulative Incidence Functions
+
+- pneumonia doesn't appear to have an effect on the death hazard
+- this does *not* imply that pneumonia has no effect on mortality
+
+```{r, fig.width = 8, fig.height = 3, out.width = "600px"}
+ndf <- ped %>% make_newdata(
+  tend  = unique(tend),
+  pneu  = unique(pneu),
+  cause = unique(cause))
+ndf %>% group_by(cause) %>% slice(1:3)
+ndf <- ndf %>%
+  group_by(cause, pneu) %>% # important!
+  add_cif(pam) %>%
+  ungroup() %>%
+  mutate(
+    cause = factor(cause, labels = c("Discharge", "Death")),
+    pneu  = factor(pneu, labels = c("No Pneumonia", "Pneumonia"))
+  )
+# visualization
+ggplot(ndf, aes(x = tend, y = cif)) +
+  geom_line(aes(col = pneu)) +
+  geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
+  facet_wrap(~cause) +
+  labs(
+    y     = "CIF",
+    x     = "time",
+    color = "Pneumonia",
+    fill  = "Pneumonia"
+  )
+```
+
+- Pneumonia reduces the hazard for Discharge $\rightarrow$ subjects admitted with pneumonia stay on ICU longer
+- While they are in the ICU, the are exposed to an unchanged hazard for death
+- As a consequence more patients with pneumonia die than patients without pneumonia

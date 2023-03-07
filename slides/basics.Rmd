@@ -1,0 +1,120 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font150[
+**Qauntifying duration time distributions**
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+
+---
+# General setting
+
+We are interested in:
+
+-   time span,
+-   survival time,
+-   duration
+
+End of the time span defined by occurence of an **event**.
+
+A random variable $T \geq 0$ defining the length of the time span is observed.
+
+We want to characterize/estimate the distribution of event times $T$, potentially depending on covariates (under censoring)
+
+
+---
+# Description of a distribution
+
+The distribution of a non-negative continuous random
+variable $T$ can be described as follows:
+.font90[
+
+- *density:* $f_T(t) := f(t)$ <br><br><br>
+
+- *cumulative distribution function:* $F_T(t):=F(t):=P(T \leq t)$ <br><br><br>
+
+- *survival function:* $S_T(t):=S(t):=P(T > t)=1-F(t)$ <br><br><br>
+
+- *hazard rate:* $h_T(t):=h(t):=\displaystyle\lim_{\Delta t\searrow 0}\frac{1}{\Delta t}P(t \leq T<t+\Delta t\,|\,T\geq t)$ <br><br><br>
+
+- *cumulative hazard rate:* $H_T(t):=H(t):=\int_0^t h(u)du$ <br><br><br>
+
+]
+
+---
+# Survival in Germany
+
+.center[
+<img src="figures/p_sterbealter_de_2009.png", width = "600px">
+]
+
+---
+# Survival in Germany
+
+.center[
+<img src="figures/p_hazard_versterben_de_2009.png" width = "600px">
+]
+
+---
+# Hazard, Density and Survival
+
+The quantities $f(t)$, $F(t)$, $S(t)$,
+$h(t)$ and $H(t)$ are related and uniquely define a
+distribution through:
+
+$$\begin{align}
+ h(t)
+  & = \frac{f(t)}{1-F(t)}=\frac{f(t)}{S(t)}\\
+S(t)
+  & =\exp(- H(t))=\exp\left(-\int_0^t h(u) du \right)\\
+f(t)
+  & = - \frac{d}{dt} S(t)
+\end{align}$$
+
+
+---
+# Proofs
+
+$$\begin{align*}
+h(t)  &= \lim_{\Delta t\searrow 0} \frac{1}{\Delta t} P(t\leq T<t+\Delta t\,|\,T\geq t)\\
+            &= \lim_{\Delta t\searrow 0}\frac{1}{\Delta t}\frac{P(\{t\leq T<t+\Delta t\} \cap \{T\geq t\})}{P(T\geq t)}\\
+            &= \lim_{\Delta t\searrow 0}\frac{1}{\Delta t}\cdot
+            \frac{P(t\leq T < t+\Delta t)}{P(T\geq t)}\\
+            &= \underbrace{\lim_{\Delta t\searrow 0}\frac{F(t+\Delta t)-F(t)}{\Delta t}}_{f(t)}\cdot \frac{1}{S(t)} \\
+           & =\frac{f(t)}{S(t)}
+\end{align*}$$
+
+
+---
+# Proofs (2)
+
+$$\begin{align*}
+ H(t)  &= \int_0^th(u) du = \int_0^t \frac{f(u)}{S(u)} du = \int_0^t \frac{f(u)}{1-F(u)} du\\
+             &\stackrel{*}{=} -\left[\log\left(1-F(u)\right)\right]_0^t = -\log\left(1-F(t)\right) \\
+             &  \qquad \stackrel{*}{} \mbox{since } \int \frac{g'(x)}{g(x)} dx = \log(g(x)) \\
+             &= -\log\left(S(t)\right) \\
+ \Leftrightarrow  S(t) & =\exp\left(-H(t)\right)\\[2em]
+ f(t)        &=\frac{dF(t)}{dt}=\frac{d(1 - S(t))}{dt}=-\frac{d}{dt} S(t)
+\end{align*}$$
+
+---
+# Decomposition of Survival Function
+
+We can decompose the survival function in a multiplicative manner.
+
+Note that
+
+$$\begin{align*}
+H(\tilde{t}) - H(t)          &= - \log(S(\tilde{t})) - (-\log(S(t))) = \log(S(t)) - \log(S(\tilde{t}))\\
+\exp(H(\tilde{t}) - H(t))    &= \frac{S(t)}{S(\tilde{t})} \\
+\exp(-[H(\tilde{t}) - H(t)]) &= \frac{S(\tilde{t})}{S(t)},\ \text{or}\\
+S(\tilde{t})                 &= S(t)\exp(-[H(\tilde{t})-H(t)])
+\end{align*}$$

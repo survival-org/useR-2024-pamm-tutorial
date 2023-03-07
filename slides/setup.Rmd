@@ -1,0 +1,128 @@
+???
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/github.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha512-SfTiTlX6kk+qitfevl/7LibUOeJWlt9rbyDn92a1DqWOw9vWG2MFoays0sgObmWazO5BQPiFucnnEAjpAB+/Sw==" crossorigin="anonymous">
+
+$$\usepackage{amsmath,amssymb,bm}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\tn}[1]{\textnormal{#1}}
+\newcommand{\mbf}[1]{\mathbf{#1}}
+\newcommand{\nn}{\nonumber}
+\newcommand{\ub}{\underbrace}
+\newcommand{\tbf}[1]{\textbf{#1}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\bfe}{\mathbf{e}} % Einser-vektor
+\newcommand{\bfA}{\mathbf{A}}
+\newcommand{\bfB}{\mathbf{B}}
+\newcommand{\bfC}{\mathbf{C}}
+\newcommand{\bfD}{\mathbf{D}}
+\newcommand{\bfF}{\mathbf{F}}
+\newcommand{\bfG}{\mathbf{G}}
+\newcommand{\bfH}{\mathbf{H}}
+\newcommand{\bfI}{\mathbf{I}}
+\newcommand{\bfK}{\mathbf{K}}
+\newcommand{\bfP}{\mathbf{P}}
+\newcommand{\bfQ}{\mathbf{Q}}
+\newcommand{\bfR}{\mathbf{R}}
+\newcommand{\bfT}{\mathbf{T}}
+\newcommand{\bfW}{\mathbf{W}}
+\newcommand{\bfY}{\mathbf{Y}}
+\newcommand{\bfZ}{\mathbf{Z}}
+\newcommand{\bfz}{\mathbf{z}}
+\newcommand{\bsSigma}{\boldsymbol{\Sigma}}
+\newcommand{\bfc}{\mathbf{c}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\bsvarepsilon}{\boldsymbol{\varepsilon}}
+\newcommand{\bfx}{\mathbf{x}}
+\newcommand{\bfX}{\mathbf{X}}
+\newcommand{\bfB}{\mathbf{B}}
+\newcommand{\bff}{\mathbf{f}}
+\newcommand{\bsbeta}{\boldsymbol{\beta}}
+\newcommand{\bsdelta}{\boldsymbol{\delta}}
+\newcommand{\bsgamma}{\boldsymbol{\gamma}}
+\newcommand{\bslambda}{\boldsymbol{\lambda}}
+\newcommand{\bseta}{\boldsymbol{\eta}}
+\newcommand{\bsmu}{\boldsymbol{\mu}}
+\newcommand{\bsnu}{\boldsymbol{\nu}}
+\newcommand{\bstheta}{\boldsymbol{\theta}}
+\newcommand{\bspsi}{\boldsymbol{\psi}}
+\newcommand{\bsvartheta}{\boldsymbol{\vartheta}}
+\newcommand{\bfS}{\mathbf{S}}
+\newcommand{\bfz}{\mathbf{z}}
+\newcommand{\bfy}{\mathbf{y}}
+\newcommand{\bfZ}{\mathbf{Z}}
+\newcommand{\bfV}{\mathbf{V}}
+\newcommand{\bprime}{b^{\prime}}
+\newcommand{\hprime}{h^{\prime}}
+\newcommand{\bdprime}{b^{\prime\prime}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\rpexp}{\operatorname{rpexp}}
+\newcommand{\Rlang}{\textbf{\textsf{R}}}
+\newcommand{\code}[1]{{\small \texttt{#1}}}
+\newcommand{\drm}{\mathrm{d}}
+\newcommand{\mcZ}{\mathcal{Z}}
+\newcommand{\argmin}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{min}}\;}
+\newcommand{\argmax}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{max}}\;}
+\newcommand{\sumn}{\sum_{i=1}^n}$$
+
+
+```{r, load_refs, echo=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, hyperlink=TRUE, style = "markdown",
+  max.names = 1)
+bib <- ReadBib("../references.bib", check = FALSE)
+library(knitr)
+opts_chunk$set(
+  cache      = TRUE,
+  dev        = "png",
+  dpi        = 500,
+  fig.align  = "center",
+  out.width  = "400px",
+  fig.width  = 5,
+  fig.height = 5,
+  collapse   = TRUE,
+  warning    = FALSE,
+  echo       = FALSE,
+  message    = FALSE
+  )
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(if (abs(lines[1])>1) more else NULL,
+            x[lines],
+            if (length(x)>lines[abs(length(lines))]) more else NULL
+           )
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+library(ggplot2)
+theme_set(theme_bw()  +
+  theme(
+    axis.text    = element_text(size = rel(1.2)),
+    axis.title   = element_text(size = rel(1.5)),
+    legend.text  = element_text(size = rel(1.2)),
+    legend.title = element_text(size = rel(1.5)),
+    strip.text = element_text(size = rel(1.3))
+  )
+)
+library(patchwork)
+library(dplyr)
+Set1 <- RColorBrewer::brewer.pal(9, "Set1")
+```

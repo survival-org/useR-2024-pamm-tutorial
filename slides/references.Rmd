@@ -1,0 +1,16 @@
+
+---
+# References
+.font70[
+```{r, results = "asis", echo=FALSE, eval=TRUE, cache=FALSE}
+PrintBibliography(bib, start = 1, end = 10)
+```
+]
+
+---
+# References
+.font70[
+```{r, results = "asis", echo=FALSE, eval=TRUE, cache=FALSE}
+PrintBibliography(bib, start = 11, end = 20)
+```
+]

@@ -1,0 +1,30 @@
+# extensions
+*.pdf
+*.html
+*.mp4
+*.log
+*.soc
+*.synctex.gz
+*.rdx
+
+
+
+# folder
+slides/main_cache
+slides/main_files
+slides/videos
+slides/PDF
+slides/libs
+exercises/**/*.tex
+exercises/**/*.aux
+exercises/**/*.fdb_latexmk
+exercises/**/*.fls
+exercises/**/*.loc
+exercises/**/*.out
+/.PowerFolder/
+.Rproj.user
+*.Rproj
+*.Rhistory
+exam/ideas
+exam/show_all/cache
+exam/show_all/figure

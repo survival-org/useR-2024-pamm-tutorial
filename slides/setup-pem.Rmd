@@ -1,0 +1,46 @@
+```{r, ex-wb1, echo = FALSE, fig.width=6, fig.height=3}
+library(pammtools)
+# Weibull hazard function
+hweibull <- function(t, alpha, lambda) {
+  dweibull(t, alpha, lambda)/pweibull(t, alpha, lambda, lower.tail=FALSE)
+}
+
+# plot hazard and survival probability:
+alpha <- 1.5
+lambda <- 10
+t <- seq(0, 10, by=.01)
+wb_df <- data.frame(t = t) %>%
+  mutate(
+    hazard   = hweibull(t, alpha, lambda),
+    survival = pweibull(t, alpha, lambda, lower.tail = FALSE))
+p_wb_hazard <- ggplot(wb_df, aes(x=t, y=hazard)) +
+  geom_line(col="red") + ylab(expression(h(t))) + xlab("time") +
+  geom_vline(xintercept = seq(0, 10, by = 1), lty = 3)
+```
+
+```{r, sim-wb, echo=FALSE, dependson="ex-wb1"}
+# set number of simulated survival times
+n <- 1000
+# set seed for RNG
+set.seed(24032018)
+sim_df_weibull <- data.frame(
+  time = rweibull(n, 1.5, 10),
+  status = 1)
+
+ped <- as_ped(Surv(time, status)~., cut=seq(0, 10, by = 1), data=sim_df_weibull)
+pem <- glm(ped_status ~ interval, data = ped, family=poisson(), offset=offset)
+pem_haz_df <- int_info(ped) %>%
+  mutate(
+    hazard = predict(object=pem, ., type="response"),
+    survival = exp(-cumsum(hazard * intlen)))
+```
+
+
+
+```{r ex-pem-1, fig.width=6, fig.height=3, echo=FALSE, dependson=c("ex-wb1", "sim-wb")}
+p_pem_base <- ggplot(pem_haz_df, aes(x = tend)) + xlab("time")
+p_pem_haz <- p_pem_base + aes(y = hazard) +
+  geom_line(data=data.frame(tend = t, hazard=hweibull(t, 1.5, 10)), col=2) +
+  geom_stephazard() + ylab(expression(h(t)))
+pem_haz1 <- p_pem_haz + geom_vline(xintercept = seq(0, 10, by = 1), lty = 3)
+```

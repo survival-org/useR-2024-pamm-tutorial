@@ -1,0 +1,182 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font150[
+**Model comparison**
+]
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+---
+# Comparing alternative models
+- In many situations, we want to compare different model specifications
+(with/without interactions, linear/non-linear) and
+model types (e.g., Weibull AFT, Cox PH, Machine Learning models, ...)
+
+- For the comparison to be valid, the *measure* with which we compare different
+models must be independent of the specific model type
+
+- Two popular measures are the
+  - (time-dependent) **C-Index** ([Gerds et.al., 2013](http://onlinelibrary.wiley.com/doi/10.1002/sim.5681/abstract)) and
+  - (time-dependent) **Brier Score** ([Mogensen et. al., 2012](https://www.jstatsoft.org/article/view/v050i11))
+
+
+---
+# C-Index
+.font90[
+- Out of all observations in the data, consider the pairs of observations that are comparable
+  - Censored observation not comparable to uncensored observation, if observed censoring time shorter than observed event time
+
+- For all comparable pairs,
+  - count 1, if pairs are concordant, i.e., the observed times are in the same order as the predicted outcome (e.g., $t_i < t_j\ \&\ \exp(\eta_i) > \exp(\eta_j) \Leftrightarrow S_i(t) < S_j(t)$)
+  - count 0, if pairs not concordant
+  - if pairs are comparable and $S_i(t) = S_j(t)$ then we count .5. For the Kaplan-Meier estimator, $S_i(t) = S_j(t)\ \forall i,j:i\neq j$
+
+- The C-Index is then given by $C = \frac{\# \text{concordant pairs}}{\# \text{comparable pairs}} \in [0,1]$
+  + $C = 0.5$ equivalent to estimation without covariate information (e.g. KM estimator, serves as basline)
+  + $C = 1$ perfect concordance
+
+- $C$ can depend on time, if the ranking of outcome predictions depend on time, e.g., $\eta_i = \exp(\bfx_i^T(t)\bsbeta(t))$
+]
+
+---
+# Brier Score
+
+- Let
+  + $\hat{S}$ an estimator for the survival time (e.g., Kaplan-Meier, Cox model, ...)
+  + $Y_{i}(t) = I(T_i > t)$, the true status of subject $i$ at time $t$
+
+- The Brier Score at time point $t$ is defined as
+$$BS(t,\hat{S}) = E(Y_i(t) - \hat{S}(t|\bfx_i))^2$$
+
+- An estimate of the Brier Score is given by
+$$\widehat{BS}(t, \hat{S}) = \frac{1}{n} \sum_{i=1}^n (\hat{Y}_i(t) - \hat{S}(t|\bfx_i))^2$$
+  where $\hat{Y}_i(t) = I(t_i > t), t_i = \min(T_i, C_i)$
+
+
+---
+# Inverse Probability of Censoring Weights (ICPW)
+- When the performance measures are based on right-censored data (and time-dependent), it is usually weighted by the *inverse probability of censoring weights* (IPCW)
+$$\widehat{W}_i(t) = \frac{(1- \hat{Y}_i(t))\delta_i}{\hat{G}(t_i-|\bfx_i)} +
+\frac{\hat{Y}_i(t)}{\hat{G}(t|\bfx_i)}$$
+where $\delta_i$ is the subject specific, time-independent event indicator;
+$t_i-$ is the time just prior to the observed time $t_i$.
+
+- Only one of the summands is $\neq 0$ for specific $i$ and $t$; If subject is
+censored ( $\delta_i = 0$), the first summand is always 0.
+
+- $\hat{G}(t|\bfx_i) \approx P(C_i > t|\bfx_i)$ is an estimate of the survival
+probability for the censoring times given covariates.
+
+- The IPC weighted BS is given by
+$$\widehat{BS}(t, \hat{S}) = \frac{1}{n}\sum_{i=1}^n\hat{W}_i(\hat{Y}_i(t) - \hat{S}(t|\bfx_i))^2$$
+
+
+---
+# Prediction error curves (PEC)
+
+Brier Score evaluated at specific time point $t$ <br>
+$\ra$ different models might be better at different times
+
+- Usually $\widehat{BS}$ is estimated for a set of times $t_k$ spread evenly
+over the follow-up $t_k\in [0, \tau \leq t_{\text{max}}]$
+
+- The visualization of the BS evaluated at different time points $t_k$ is referred to as prediction error curve (PEC)
+
+- The *Integrated Brier Score* (IBS) can be used to obtain an overall
+performance measure for $\tau > 0$:
+
+$$IBS(\tau) = \frac{1}{\tau} \int_{0}^\tau \widehat{BS}(u, \hat{S})\mathrm{d}u$$
+
+- In practice, $\tau < t_{\max}$, e.g. $75\%$-Quantile of event times in training data (to avoid evaluation outside of range of observed event times on test data)
+
+
+---
+# PEC (2)
+
+- In **R**, the C-Index and PEC/IBS are implemented in the package [**`pec`**](https://cran.r-project.org/web/packages/pec/index.html)
+
+- Example:
+
+```{r, pecfit, echo = TRUE, message = FALSE}
+library(survival)
+library(pec)
+data("tumor", package="pammtools")
+cph <- coxph(Surv(days, status) ~ complications + age + metastases + charlson_score + transfusion + sex + resection, data = tumor, x = TRUE)
+# Estimate CV PEC for even grid of time points between 0 and 4000
+pec_obj <- pec::pec(list(cph = cph),
+  formula     = Surv(days, status)~1, # Specification of the IPCW model
+  data        = tumor,  exact = FALSE,
+  times       = seq(0, 3000, by = 100),# tau = 3000
+  splitMethod = "cv10", B = 20, # 10-fold Cross Validation, repeated 20 times
+  ipcw.refit  = TRUE, # IPCW will be re-estimated in each CV fold
+  reference   = TRUE) # also estimate KM  without covariates
+```
+
+
+---
+# PEC (3)
+- The lower the PEC/BS the better the prediction
+- Here, Cox Model is always better compared to KM without covariates
+(Reference)
+
+```{r, echo = TRUE, fig.width = 6, fig.height =5, dependson="pecfit", out.width = "450px"}
+plot(pec_obj)
+```
+
+---
+# PEC (4)
+
+For this data set, the (untuned) RSF doesn't appear to perform better than the CPH model
+
+```{r, message = FALSE, echo = FALSE, fig.width = 6, fig.height = 5, out.width = "500px"}
+library(survival)
+library(pec)
+data("tumor", package="pammtools")
+tumor <- as.data.frame(tumor)
+rsf <- randomForestSRC::rfsrc(Surv(days, status)~., data = tumor)
+
+# Estimate CV PEC for even grid of time points between 0 and 3000
+pec_obj2 <- pec::pec(list(cph = cph, rsf = rsf),
+  formula     = Surv(days, status)~1, # Specification of the IPCW model
+  data        = tumor,  exact = FALSE,
+  times       = seq(0, 3000, by = 100),# tau = 3000
+  splitMethod = "cv5", # 5-fold Cross Validation
+  ipcw.refit  = TRUE,
+  reference   = TRUE) # also estimate KM  without covariates
+plot(pec_obj2)
+```
+
+
+---
+# IBS
+
+```{r, echo = TRUE}
+crps(pec_obj2, times = c(500, 1000, 2000, 2500))
+```
+
+
+---
+# Summary
+
+- The **C-Index** measures how well the prediction model can order the survival
+times (it is a rank statistic and should be accompanied by a measure of
+calibration, e.g. Brier-Score)
+
+- The **Brier Score** assesses the predictive ability of a model (compares
+observed and predicted outcome) and is used to calculate PECs/IBS
+
+- Both should not be evaluated on the training data
+
+- Differences between PEC/IBS for covariate model and reference model often small, even when covariate have big, significant effects
+
+- The IBS still depends on time via the choice of $\tau$ (different models might be better at different $\tau$)
+
+- Currently, not a lot of research on model evaluation and model comparison beyond the single-event, right-censoring setting

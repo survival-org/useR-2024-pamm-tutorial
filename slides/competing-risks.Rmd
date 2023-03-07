@@ -1,0 +1,199 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font120[
+**Competing Risks**
+]
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+---
+# Event History Analysis
+
+.center[
+<img src="figures/event-history-analysis.svg", width="700px">
+]
+
+In the Competing Risks setting
+- we are interested in multiple events, e.g. a patient may die from different causes
+- $0$ transient state; $1,\ldots,K$ absorbing states
+
+
+---
+# Latent Failure Time Approach
+
+Consider two event types $E \in \{1, 2\}$
+
+$$T = \min(T_1,T_2), E = 1 \iff T_1 < T_2$$
+
+- event type $E$ with associated event time $T_E$
+
+- Only $(T, E)$ observable, joint distribution of $(T_1, T_2)$ is not identifiable
+
+- assuming independence between $T_1$ and $T_2$ makes it identifiable (but checking the assumption is not possible using the observed data)
+
+- interpretation of joint distribution rarely interesting
+
+- in general, we prefer the **cause-specific hazard** model
+
+---
+# Cause-Specific Hazards
+
+We define $T$ as the time to an event
+$E \in \{1,\ldots,K\}$.
+
+The cause-specific hazards are
+$$h_e(t) = \lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}, \; e = 1, \dots, K.$$
+This defines a joint distribution of $T$ and $E$.
+
+The cause-specific cumulative hazard is defined as
+$$H_e(t) = \int^t_0 h_e(s)ds \ .$$
+
+---
+# Marginal Hazard
+
+The marginal hazard of $T$ is
+$$h(t) = \sum_{e=1}^K h_e(t) = \sum_{e=1}^K \lim_{\Delta t \to 0}  \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}\ ,$$
+with survival function
+$$S(t) = P(T \geq t) = \exp \Bigl( -H(t) \Bigr)\ ,$$ where
+$$H(t) = \sum_{e = 1}^K \int_0^t h_e(u)\ du = \sum_{e = 1}^K H_e(t)\ .$$
+
+Relationship between event type probabilities and hazard rates:
+
+$$P(E = e | t \leq T \leq t + \Delta t) \approx \frac{h_e(t)}{h(t)}$$
+
+
+
+---
+# Cumulative Incidence Function
+
+**CIF $F_e(t)$** denotes the probability of experiencing event $E = e$ before time $t$:
+$$\begin{align*}
+F_e(t) &= P(T \leq t, E = e) = \int_0^t h_e(u) S(u)\ du, \\
+\text{since} &\lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t,\ E = e)}{\Delta t} =
+\lim_{\Delta t \to 0} \frac{P(T \leq t + \Delta t,\ E = e | T \geq t) P(T \geq t)}{\Delta t} = h_e(t) S(t).\\ \text{Let }
+f_e(t) &= F_e'(t) = \left(\int_0^t h_e (u)\ S (u)\ du \right)' = h_e(t)\ S (t).\qquad \text{ (this is not a density!)}\\
+\text{We also have } F(t) &= P(T \leq t) = \sum_{e = 1}^K P(T \leq t, E = e) = \sum_{e = 1}^K F_e(t) \;\text{, i.e., "cumulative incidence",} \\
+\text{and } \pi_e &:= P(E = e) = \lim_{t\to \infty}P(T \leq t, E = e) = F_e (\infty)
+\end{align*}$$
+
+So the cause-specific event time distribution function is
+
+$$P(T \leq t\ |\ E = e) = \frac{P(T \leq t, E = e)}{P(E = e)} = \frac{F_e(t)}{\pi_e}$$
+
+---
+# Estimation
+
+Recall Nelson-Aalen estimator
+$$\hat{H}(t) = \sum_{r:t_{(r)} < t} \frac{d_r}{n_r} = \sum_{s \leq t} \frac{\Delta N(s)}{Y(s)}$$
+with $Y(t)$ the number of individuals at risk just before time point $t$ and $N(t)$ the counting process of events.
+
+Now, for specific cause $e$:
+$$\hat{H}_e(t) = \sum_{r:t_{(r)} < t} \frac{d_{re}}{n_r} = \sum_{s \leq t} \frac{\Delta N_{0e}(s)}{Y(s)}$$
+with $d_{re}$ the number of type $e$ events at time point $t_{r}$.
+
+
+Cumulative hazard for all causes:
+$$\hat{H}(t) = \sum_{e=1}^K \hat{H}_e(t)$$
+
+---
+# Estimation (2)
+
+**Aalen-Johansen estimator** of cumulative incidence:
+
+$$\begin{align*}
+\hat{P}(T \leq t, E = e)
+& = \int_0^t \hat{h}_e(s) \hat{S}(s) ds\\
+& = \sum_{r:t_{(r)} \leq t} (\hat{H}_e(t_{(r)}) - \hat{H}_e(t_{(r-1)})) \cdot \hat{P}(T > t_{(r)})\\
+& = \sum_{r:t_{(r)} \leq t} \frac{d_{re}}{n_r} \cdot \underbrace{\hat{P}(T > t_{(r)})}_{\text{Kaplan-Meier estimator}}\\
+\end{align*}$$
+
+<!-- with Kaplan-Meier estimator
+
+$$\hat(P)(T > t_{(r)}) = \prod_{k: t_{(k)} \leq t_{(r)}}(1-\frac{n_k}{d_k})$$
+
+ -->
+
+---
+# Likelihood
+
+
+$$\begin{align*}
+L &= \prod_{i=1}^{n} f_{E_i}^{\delta_i} (t_i)\ S^{1-\delta_i} (t_i),\\
+\delta_i
+&= \begin{cases}
+  1 & \text{if event } E_i \text{ was observed at } t_i\\
+  0 & \mbox{else}\end{cases}\\
+S(t) &= \exp \Bigl( - \sum_{e=1}^K H_e(t) \Bigr) =
+\prod_{e=1}^K \exp \bigl( -H_e(t)\bigr) = \prod_{e=1}^K G_e(t)
+\end{align*}$$
+
+Caution:
+$1 - G_e(t) = P(T_e \leq t)$ and $F_e(t) = P(T \leq t , E = e)$
+
+---
+# Likelihood(2)
+
+With $\delta_{ie} = \delta_i\ I(E_i = e)$
+
+$$\begin{align*}
+L &= \prod_{i=1}^n \left(\prod_{e = 1}^K f_e^{\delta_{ie}}(t_i) \right) \cdot S^{1-\delta_i}(t_i) = \prod_{i=1}^n \left( \prod_{e = 1}^K (h_e(t_i)\ S(t_i))^{\delta_{ie}} \right) \cdot S^{1-\delta_i}(t_i)\\
+&= \prod_{i=1}^n \left(\prod_{e = 1}^K h_e^{\delta_{ie}}(t_i)\right) \cdot  S(t_i) = \prod_{i=1}^n \prod_{e = 1}^K h_e^{\delta_{ie}}(t_i) \cdot G_e(t_i)\\
+&= \prod_{i=1}^n \prod_{e = 1}^K L_{ie} = \prod_{e = 1}^K \prod_{i=1}^n L_{ie}
+\end{align*}$$
+
+
+
+---
+# Likelihood(3)
+
+The likelihood contribution $L_e$ is equal to the
+likelihood of a "standard" duration time model with event $E = e$ only, so we can estimate
+the cause-specific hazards separately.
+
+We therefore set
+$$h_e(t|\bfx_i) = h_{0e}(t) \exp(\bfx_i^\top \bsbeta_e)\ .$$
+
+---
+# Likelihood(4)
+
+The data set
+$$\begin{array}{llll}
+T\quad & E\quad & \delta\quad & x\\ \hline
+3 & 1 & 1 & x_1\\
+4 & 2 & 1 & x_2\\
+2 & 0 & 0 & x_3\\
+\end{array}$$
+becomes
+
+$$\begin{array}{llllll}
+T & E & \delta & x & \delta_1 & \delta_2 \\ \hline
+3 & 1 & 1 & x_1 & 1 & 0\\
+4 & 2 & 1 & x_2 & 0 & 1\\
+2 & 0 & 0 & x_3 & 0 & 0\\
+\end{array}$$
+
+
+where the cause-specific hazard estimates for $E = 1$ use a hazard rate model with
+$\delta_1$ and a hazard rate model with $\delta_2$ for $E = 2$.
+
+
+---
+# Cause-Specific Proportional Hazard
+
+$$h_e(t|\bfx) = h_{0e}(t) \exp(\bfx^\top\bsbeta_{e})$$
+
+- Cox type model for each cause
+- use partial likelihood for each cause
+- alternative form with cause specific predictors:
+  $$h_{e}(t|\bfx) = h_{0e}(t)\exp(\bfx_{e}^\top\bsbeta_{e})$$
+- interpretation **conditional on *non-occurrence*** of all competing events <br>
+  $\implies$ no (direct) inference on CIF, which is often more relevant
+  (Alternative approach: **Fine & Gray Subdistribution Hazards**)

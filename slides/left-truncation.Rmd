@@ -1,0 +1,195 @@
+
+---
+class: inverse, middle, center
+
+.font120[
+**Left truncation**
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+
+---
+# Left Truncation
+
+Only individuals that experienced an event *after* $y_i$ are observed, i.e., $t_i \geq y_i$.
+
+Likelihood contribution:
+$$L_i(\bstheta) = P(T=t_i | T \geq y_i, \bstheta) = \frac{f(t_i, \bstheta)}{S(y_i, \bstheta)}$$
+
+**Example: Infant Mortality**:
+- Infants were included in the study when their mother died (left truncation event)
+- Two infants of same age who's mother was still alive were matched into the study
+- All infants still alive were censored at the end of the study (365 days)
+- Infants that die before their mother never enter the study
+- Hypothesis: infants who's mothers are still alive survive longer
+
+
+---
+# Example: Infant Mortality
+
+
+```{r, echo = TRUE}
+data("infants", package = "eha")
+head(infants)
+xtabs(~event + mother, data = infants)
+summary(infants$exit)
+infants %>% group_by(mother) %>% summarize(mean = mean(exit - enter), median = median(exit - enter))
+```
+
+
+---
+# Example: Infant Mortality (2)
+
+"Naive" analysis: Ignore left-truncation
+
+```{r, echo = TRUE, eval = TRUE}
+library(flexsurv)
+m1 <- flexsurvreg(Surv(exit, event) ~ mother, data = infants, dist = "weibull")
+levels(infants$mother)
+coef(m1)
+```
+
+---
+# Example: Infant Mortality (2)
+
+"Naive" analysis: Ignore left-truncation
+
+```{r, echo = TRUE}
+library(flexsurv)
+m1 <- flexsurvreg(Surv(exit, event) ~ mother, data = infants, dist = "weibull")
+coef(m1)
+# (inverse) acceleration factor
+exp(-coef(m1)[3])
+# mean expected survival time:
+newdata = data.frame(mother = factor(c("dead", "alive")))
+summary(m1, newdata, type = "mean") %>% purrr::map(~.x/365)
+```
+
+---
+# Example: Infant Mortality (3)
+Accounting for left-truncation:
+
+```{r, echo = TRUE, eval = FALSE}
+m2 <- flexsurvreg(
+  formula = Surv(enter, exit, event, type = "counting") ~ mother,
+  data    = infants,
+  dist    = "weibull")
+# inverse acceleration factor
+cbind(coef = -coef(m2)[3], acf = exp(-coef(m2)[3]))
+summary(m2, newdata, type = "mean") %>% purrr::map(~ .x / 365)
+```
+
+---
+# Example: Infant Mortality (3)
+Accounting for left-truncation:
+
+```{r, echo = TRUE, eval = TRUE}
+m2 <- flexsurvreg(
+  formula = Surv(enter, exit, event, type = "counting") ~ mother,
+  data    = infants,
+  dist    = "weibull")
+# inverse acceleration factor
+cbind(coef = -coef(m2)[3], acf = exp(-coef(m2)[3]))
+summary(m2, newdata, type = "mean") %>% purrr::map(~ .x / 365)
+```
+
+---
+# Example: Infant Mortality (4)
+Comparison to results from **`eha`** package
+
+```{r, echo = TRUE}
+# proportional hazards representation of Weibull model
+m3 <- eha::phreg(Surv(exit, event) ~ mother, data = infants)
+m4 <- eha::phreg(Surv(enter, exit, event) ~ mother, data = infants)
+rbind(
+  cbind(coef = coef(m3)[1], HR = exp(coef(m3)[1])),
+  cbind(coef = coef(m4)[1], HR = exp(coef(m4)[1]))
+)
+```
+
+---
+# Example: Infant Mortality (5)
+Coefficient estimates from **`flexsurv`** as hazard ratios
+
+```{r, echo = TRUE}
+# extract shape parameter
+alpha <- 1/exp(-c(coef(m1)[1], coef(m2)[1]))
+# calculate hazard ratio
+exp(-alpha * c(coef(m1)[3], coef(m2)[3]))
+```
+
+
+---
+# Example: Infant Mortality (6)
+
+Non-proportionality?
+
+```{r, echo = TRUE}
+m2a <- flexsurvreg(
+  formula = Surv(enter, exit, event, type = "counting") ~ mother,
+  anc     = list(shape = ~mother),
+  data    = infants,
+  dist    = "weibull")
+coef(m2)
+coef(m2a)
+AIC(m2, m2a)
+```
+
+
+---
+# Example Infant Mortality (7)
+Further covariates
+
+```{r, echo = TRUE, eval = FALSE}
+m2b <- flexsurvreg(
+  formula = Surv(enter, exit, event, type = "counting") ~ mother + age + sex + parish + civst + ses,
+  data    = infants,
+  dist    = "weibull")
+coef(m2b)
+alpha <- 1/exp(-coef(m2b)[1])
+exp(-alpha * coef(m2b)[-c(1:2)])
+```
+
+---
+# Example Infant Mortality (7)
+Further covariates
+
+```{r, echo = TRUE}
+m2b <- flexsurvreg(
+  formula = Surv(enter, exit, event, type = "counting") ~ mother + age + sex + parish + civst + ses,
+  data    = infants,
+  dist    = "weibull")
+coef(m2b)
+alpha <- 1/exp(-coef(m2b)[1])
+exp(-alpha * coef(m2b)[-c(1:2)])
+AIC(m2, m2b)
+```
+
+
+---
+# Left-truncation in Event History Analysis
+
+- So far we only considered transitions from the initial status (e.g., alive) to a single event of interest (e.g., death)
+- However, methods for Lifetime Data Analysis can also be applied to settings with
+multiple states and trasitions between them
+- This more general setting is often refered to as *Event History Analysis*
+.center[
+<img src="figures/event-history-analysis.svg", width="700px">
+]
+
+
+---
+# Left-truncation in Event History Analysis
+.center[
+<img src="figures/event-history-analysis.svg", width="600px">
+]
+- Left-truncation can occur in each of the "0" states
+- In Addition, left truncation is relevant for each (secondary) transition in a Multi-State Model (MSM), e.g.,
+  + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at differnt time points
+  + Similarly, for transitions "2 $\ra$ 1" and "2 $\ra$ 3"
+  + State "3" is a competing risk w.r.t. state "1"

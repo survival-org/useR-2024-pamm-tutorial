@@ -1,0 +1,99 @@
+---
+title: "Survival Analysis W22/23"
+subtitle: "Recurrent Events"
+author: "Andreas Bender"
+---
+
+```{r, message = FALSE}
+library(survival)
+library(pammtools)
+library(purrr)
+library(dplyr)
+# visualization
+library(ggplot2)
+theme_set(theme_bw())
+library(patchwork)
+```
+
+```{r, message = FALSE, echo = FALSE, eval = TRUE}
+# references
+library(RefManageR)
+BibOptions(check.entries = FALSE, hyperlink=TRUE, style = "markdown",
+  max.names = 1)
+bib <- ReadBib("../references.bib", check = FALSE)
+options(width = 120)
+```
+
+
+
+## Chronic Granulotamous Disease (CGD)
+
+- RCT for effect of interferon gamma (treatment) on patients with CGD
+- CGD is an inherited disorder that manifests in recurrent infections (with skin leasons)
+
+```{r}
+data("cgd", package = "survival")
+cgd %>% select(-random, -hos.cat, -center) %>% head()
+table(cgd$enum)
+```
+
+```{r}
+cgd <- cgd %>%
+  mutate(
+    steroids = as.factor(ifelse(steroids, "yes", "no")),
+    gap = tstop - tstart,
+    enum2 = ifelse(enum > 3, "4+", enum))
+table(cgd$enum2)
+# assumption of renewal process without subject specific correlation or dependence on event
+cph1 <- coxph(
+  formula = Surv(gap, status) ~ treat + steroids + age + inherit,
+  data = cgd)
+summary(cph1)
+cph2 <- update(cph1, .~. + frailty(id))
+cph3 <- update(cph1, .~. + strata(enum2))
+cph4 <- update(cph2, .~. + strata(enum2))
+```
+
+### Treatment effect
+```{r}
+imap_dfr(
+  .x = list(cph1, cph2, cph3, cph4),
+  .f = ~ {
+    coef_tab <- summary(.x)$coefficients
+    colnames(coef_tab)[ncol(coef_tab)] <- "p"
+    coef_tab[1, c("coef", "se(coef)", "p")]
+  },
+  .id = "model")
+```
+
+### Frailties
+```{r}
+summary(cph2)$coefficients[5,]
+summary(cph4)$coefficients[5,]
+summary(cph2)$print2
+summary(cph4)$print2
+```
+
+### Strata
+```{r, fig.width = 8, fig.height = 3}
+bh3 <- basehaz(cph3)
+bh4 <- basehaz(cph4)
+p3 <- ggplot(bh3, aes(x = time, y = hazard, col=strata))+ geom_stephazard() +
+  ylab("cumulative hazard")
+p4 <- p3 %+% bh4
+p3 + p4
+```
+
+$\rightarrow$ baseline hazard almost identical for both analyses <br>
+
+$\rightarrow$ higher baseline hazard for increased event number <br>
+
+$\rightarrow$ when stratification is not included, the correlation induced by "event number" is (partially) absorbed by the random effects (hence the differences in random effect variance in the two analyses)
+
+<!--
+# References
+
+```{r, results = "asis", warning = FALSE, echo = FALSE}
+PrintBibliography(bib, start = 1, end = 2)
+```
+ -->

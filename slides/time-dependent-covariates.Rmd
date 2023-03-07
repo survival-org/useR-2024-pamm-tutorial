@@ -1,0 +1,18 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font120[
+**Time-dependent Covariates**
+]
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+---
+# First slide

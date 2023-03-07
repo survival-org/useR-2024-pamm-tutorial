@@ -1,0 +1,427 @@
+---
+title: "Survival Analysis W22/23"
+subtitle: "Piecewise Exponential (Additive) Model"
+author: "Andreas Bender"
+---
+
+
+```{r, echo = FALSE}
+options(width = 120)
+library(knitr)
+opts_chunk$set(
+  fig.align = "center"
+)
+```
+
+
+
+```{r, message = FALSE}
+library(dplyr)
+library(purrr)
+library(survival)
+library(pammtools)
+library(mgcv)
+library(ggplot2)
+theme_set(theme_bw())
+library(patchwork)
+```
+
+In this Notebook, we look at the Piecewise Exponential Model (PEM) and the Piecewise exponential Additive Model (PAM). Conceptually, the models are equivalent to the Cox(-PH) model:
+
+$$h(t|\mathbf{x}) = h_0(t)\exp(\mathbf{x}^\top\boldsymbol{\beta})$$
+
+This means, covariates affect the hazard multiplicatively and can be interpreted via hazard ratios as in the Cox-PH model.
+
+The baseline hazard however, is estimated (semi-)parametrically via optimization of the (penalized) Poisson likelihood rather than non-parametrically as in the Cox model.
+
+
+## Example Veteran' Data
+First we use the `veteran` data to illustrate that the PEM is equivalent to the Cox-PH model (w.r.t. to $\boldsymbol{\beta}$ estimates) when there are no ties in the data.
+
+```{r}
+data("cancer", package = "survival")
+head(veteran)
+```
+
+## Piecewise Exponential Model (PEM)
+Below we fit the PEM model after removing duplicate times from the data and show that the estimate for age is equivalent to the results of `survival::coxph`.
+Note that the baseline hazard is estimated via the `interval` variable, which is a factor variable and will be reference coded.
+
+
+First we transform the data to the PED format:
+
+```{r, fig.width = 8, fig.height = 4, out.width = "600px"}
+veteran <- veteran %>%
+  mutate(
+    trt   = 1L * (trt == 2),
+    prior = 1L * (prior == 10),
+    status = ifelse(time > 400, 0, status), # censor obs after t = 400
+    time = ifelse(time > 400, 400, time))
+# remove ties to illustrate equivalence with Cox approach
+vetu <- filter(veteran, !duplicated(time))
+ped_vetu <- vetu %>%
+  as_ped(Surv(time, status)~., cut = unique(vetu$time), id = "id")
+ped_vetu %>% select(-diagtime) %>% slice(1:6)
+```
+
+Now we can fit the PEM to the transformed data:
+
+
+```{r}
+pem_baseline <- glm(
+  formula = ped_status ~ interval - 1, # -1 so that each beta_j directly corresponds to log(h_j)
+  data    = ped_vetu,
+  family  = poisson(),
+  offset  = offset
+)
+coef(pem_baseline)[1:10] # beta0 = log-hazard in interval j=1, beta1 = log(h_2)
+exp(coef(pem_baseline))[1:10]
+pem_smry <- ped_vetu %>%
+  group_by(interval) %>%
+  summarize(
+    t_j        = unique(tend),
+    len_j      = unique(tend - tstart),
+    d_j        = sum(ped_status),
+    n_j        = n(),
+    o_j        = sum(exp(offset)),
+    rel_freq_j = d_j/n_j) %>%
+  mutate(
+    h_j = exp(coef(pem_baseline)),
+    H_j = cumsum(h_j * len_j))
+pem_smry |> head()# relative frequency of events in interval j = hazard in interval j (if len_j = 1)
+
+## relationship to Nelson-Aalen estimator
+cph_baseline <- coxph(Surv(time, status)~1, data = vetu)
+H_cox <- basehaz(cph_baseline)
+pem_smry %>% cbind(H_cox) %>% head()
+```
+
+
+Include `karno` variable:
+
+$$\begin{align}
+h(t|\mathbf{x})
+  & = h_0(t)\exp(\beta_1 x_{karno})\\
+  & = \exp(\beta_{0j} + \beta_1x_{karno})\ \forall t \in (a_{j-1}, a_j]
+\end{align}$$
+
+```{r}
+pem_karno <- glm(
+  formula = ped_status ~ interval + karno,
+  data    = ped_vetu,
+  family  = poisson(),
+  offset  = offset)
+coef(pem_karno)[1:10]
+```
+
+Thus, the log baseline hazard is
+
+  - $\beta_{01}$ = `(Intercept)` = `r round(coef(pem_karno)[1], 2)` in interval $(0,1]$
+  - $\beta_{02}$ = `sum(coef(pem_karno)[c(1,2)])` = `r round(sum(coef(pem_karno)[1:2]), 2)` in interval $(1,2]$
+  - ...
+  - $\beta_{05}$ = `sum(coef(pem_karno)[c(1,5)])` = `r round(sum(coef(pem_karno)[c(1,5)]),2)` in interval $(4, 7]$
+  - ...
+
+
+$\beta_{1}$ estimates are the same for the PEM and the Cox-PH model:
+
+```{r}
+## cox model for comparison
+cph_karno <- coxph(Surv(time, status) ~ karno, data = vetu)
+## compare coefficients
+cbind(
+  pem = coef(pem_karno)["karno"],
+  cox = coef(cph_karno))
+```
+
+### Piecewise exponential Additive Model (PAM)
+
+In the PAM, the baseline hazard is estimated differently (basis function representation + penalized estimation of basis coefficients):
+
+$$\begin{align}
+h(t|\mathbf{x})
+  & = h_0(t)\exp(\beta_1 x_{karno})\\
+  & = \exp(\underbrace{\beta_0 + f_0(t)}_{g_0(t)} + \beta_1x_{karno})
+\end{align}$$
+
+with $f_0(t) = \sum_{\ell=1}^L \gamma_{\ell}B_\ell(t_j)\ \forall t \in (a_{j-1},a_j]$
+
+
+```{r}
+## compare to PAM
+pam_karno <- gam(
+  formula = ped_status ~ s(tend) + karno,
+  data    = ped_vetu,
+  family  = "poisson",
+  offset  = offset)
+```
+
+```{r}
+base_pem  <- ped_vetu %>% ped_info() %>% mutate(karno = 0) %>%
+  add_hazard(pem_karno)
+base_pam <- ped_vetu %>% ped_info() %>% mutate(karno = 0) %>%
+  add_hazard(pam_karno)
+base_pam %>% select(tend, interval, karno, hazard, ci_lower, ci_upper)
+ggplot(base_pam, aes(x = tend, y = hazard)) +
+  geom_stephazard() +
+  geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = .3) +
+  geom_stephazard(data = base_pem, col = 2)
+```
+
+Note that the (absolut value of the) baseline hazard doesn't necessarily has to have a usefull interpretation, as it is the hazard for $\mathbf{x} = \mathbf{0}$.
+
+The estimate of $\beta_{x_{karno}}$ also necessarily differs between the PEM and PAM, but usually not by much:
+
+```{r}
+cbind(
+    pem = coef(pem_karno)["karno"],
+    pam = coef(pam_karno)["karno"],
+    cox = coef(cph_karno)["karno"])
+```
+
+<br><br><br>
+
+More covariates:
+
+```{r}
+mod_list <- list(pem = pem_karno, cph = cph_karno, pam = pam_karno) %>%
+  imap(~update(.x, .~. + trt + prior + karno))
+
+# summary output PAM
+summary(mod_list[["pam"]])
+# compare coefficient estimates
+mod_list %>% map_dfr(~coef(.x)[c("trt", "prior", "karno")], .id = "model")
+```
+
+
+## Time-varying effects
+
+- In the PAM, time (e.g., `tend`) is simply another covariate.
+- So far we used it to estimate the (log) baseline hazard $h_0(t) = \exp(g_0(t))$.
+- Time-varying effects, are simply interactions of the covariate time (`tend`) and other covariates (similar to the extended Cox-PH model with the data in start-stop format, see `cox-non-ph.Rmd`)
+- Interactions of time with categorical covariates are equivalent to "stratification" in Cox-PH models
+- The type of time-variation is dependent on the specification of the interaction:
+  + $f(t)x$ non-linearly time-varying effect, linear in $x$
+  + $f(t, x)$ non-linear, non-linearly time-varying effect
+- $f$ can either be an assumed parametric function, e.g. $f=\log$, or can be estimated from the data
+
+
+### Example Veteran's Data
+
+#### Linear, non-linearly time-varying effect (known $f$)
+Let's consider once again the estimation of the time-varying effect of the `karno` variable (see `W07-3-cox-non-ph.Rmd`):
+
+```{r}
+cph_tt <- coxph(
+      formula = Surv(time, status) ~ trt + prior + karno + tt(karno),
+      data    = veteran,
+      tt      = function(x, t, ...) x * log(t + 20))
+summary(cph_tt)
+```
+
+The equivalent PAM is given below:
+
+```{r}
+# create a covariate that is the assumed transformation of time
+ped <- veteran %>% as_ped(Surv(time, status)~., id = "id") %>%
+  mutate(logt20 = log(tstart + (tstart - tend) / 2 + 20))
+# fit the model: pamm is a short cut for gam(..., family = poisson(), offset = offset)
+pam_tt <- pamm(ped_status ~ s(tend) + trt + prior + karno + karno:logt20, data = ped)
+cbind(
+  pam = coef(pam_tt)[2:5],
+  cox = coef(cph_tt))
+```
+
+Compare fits:
+```{r}
+# compare fits
+t <- seq(0, 400, by = 10)
+plot(x = t, y = coef(cph_tt)["karno"] + coef(cph_tt)["tt(karno)"] * log(t + 20),
+  type = "l", ylab = "Beta(t) for karno", ylim = c(-.1, .05), las = 1,
+  col = 1)
+lines(
+  x    = t,
+  y    = coef(pam_tt)["karno"] + coef(pam_tt)["karno:logt20"] * log(t + 20),
+  col  = 2, lty = 2)
+```
+
+#### Linear, non-linearly time-varying effect (unknown $f$)
+However, we don't have to assume a parametric shape of the time variation and instead estimate it from the data:
+
+$$\begin{align}
+h(t|\mathbf{x})
+  & = h_0(t)\exp(\beta_1x_{trt} + \beta_2 x_{prior} + f_{karno}(t)x_{karno})\\
+  & = \exp(\underbrace{\beta_0 + f_0(t)}_{g_0(t)} + \beta_1x_{trt} + \beta_2 x_{prior} + f_{karno}(t)x_{karno})
+\end{align}$$
+
+with $f_{karno}(t) = \sum_{m=1}^M \gamma_{m}B_m(t_j)\ \forall t \in (a_{j-1},a_j]$
+
+```{r}
+pam_tt2 <- pamm(ped_status ~ s(tend) + trt + prior + s(tend, by = karno), data = ped)
+summary(pam_tt2)
+```
+
+Comparison to parametric form:
+
+```{r}
+plot(pam_tt2, select = 2, ylim = c(-.1, .1))
+lines(
+  x    = t,
+  y    = coef(pam_tt)["karno"] + coef(pam_tt)["karno:logt20"] * log(t + 20),
+  col  = 2, lty = 2)
+abline(h = 0, lty = 3)
+```
+
+- `karno` has hazard-decreasing effect in the beginning
+- the effect tends to 0 towards end of follow-up
+
+
+#### Non-Linear, non-linearly time-varying effect (unknown $f$)
+
+In the previous models we assumed that the effect of `karno` is non-linearly time-varying, but linear in `karno`. We can relax this assumption by estimating a bivariate function $f(t, x_{karno})$, e.g. using a tensor product smooth:
+
+$$\begin{align}
+h(t|\mathbf{x})
+  & = h_0(t)\exp(\beta_1x_{trt} + \beta_2 x_{prior} + f(t, x_{karno}))\\
+  & = \exp(\beta_0 + f_0(t) + \beta_1x_{trt} + \beta_2 x_{prior} + f(t, x_{karno}))
+\end{align}$$
+
+with $f(t, x_{karno}) = \sum_{m=1}^M \sum_{r=1}^R \gamma_{m,r}B_m(t_j)B_{r}(x_{karno})\ \forall t \in (a_{j-1},a_j]$
+
+```{r}
+pam_te <- pamm(ped_status ~ s(tend, k = 20) + trt + prior + te(tend, karno), data = ped)
+summary(pam_te)
+```
+
+```{r, fig.width = 9, fig.height = 3}
+gg_tensor(pam_te, ci = TRUE)
+```
+
+```{r, fig.width = 9, fig.height = 3}
+p_tensor <- gg_tensor(pam_te) +
+  geom_vline(xintercept = c(1, 100, 200), lty = 3) +
+  geom_hline(yintercept = c(40, 75, 95), lty = 3)
+# slices through the surface for fixed karno values
+p_slice_karno <- gg_slice(ped, pam_te, "karno", tend = unique(tend), karno = c(40, 75, 95)) +
+  geom_hline(yintercept = 0, lty = 2)
+# slices through the surface for fixed times
+p_slice_time <- gg_slice(ped, pam_te, "karno", tend = c(1, 100, 200), karno = seq_range(karno, 50)) +
+  geom_hline(yintercept = 0, lty = 2)
+p_tensor + p_slice_karno + p_slice_time
+```
+
+
+### Example Liver Resection
+
+```{r}
+data("tumor", package = "pammtools")
+head(tumor)
+ped_tumor <- tumor %>%
+  as_ped(Surv(days, status) ~.) %>%
+  mutate(strata = interaction(complications, metastases))
+```
+
+We use an interaction term between time and a categorical covariate to estimate
+group-specific baseline hazards:
+
+$$\begin{align}
+h(t|\mathbf{x})
+  & = h_0(t,k)\exp(\mathbf{x}^\top\boldsymbol{\beta}))\\
+  & = \exp(\beta_{0,k} + f_{0,k}(t) + \mathbf{x}^\top\boldsymbol{\beta})
+\end{align}$$
+
+with $k=1,\ldots,K$ and $K$ number of groups.
+
+```{r}
+pam_strata <- pamm(
+  formula  = ped_status ~ strata + s(tend, by = strata, k = 20) + charlson_score + transfusion + sex + resection,
+  data     = ped_tumor,
+  engine   = "bam",
+  method   = "fREML",
+  discrete = TRUE)
+summary(pam_strata)
+```
+
+
+Visualize the estimated hazards in the 4 groups:
+
+```{r}
+ndf <- ped_tumor %>%
+  make_newdata(tend = unique(tend), strata = unique(strata)) %>%
+  add_hazard(pam_strata)
+ggplot(ndf, aes(x = tend, y = hazard, group = strata)) +
+  geom_stephazard(aes(col = strata)) +
+  geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper, fill = strata), alpha = .3)
+```
+
+We can also visualize the differences of log-hazard of two groups with confidence intervals for the differences:
+
+```{r}
+gg_partial(ped_tumor, pam_strata, term = "strata", tend = unique(tend),  strata = c("yes.no"),
+  reference = list(strata = "yes.yes")) +
+  geom_hline(yintercept = 0, lty = 2)
+gg_partial(ped_tumor, pam_strata, term = "strata", tend = unique(tend),  strata = c("yes.no"),
+  reference = list(strata = "no.no")) +
+  geom_hline(yintercept = 0, lty = 2)
+```
+
+Visualize survival probabilities in the 4 groups (other covariates set to mean/modus):
+
+```{r}
+ndf <- ndf %>%
+  group_by(strata) %>% # important!!
+  add_surv_prob(pam_strata)
+ggplot(ndf, aes(x = tend, y = surv_prob, group = strata)) +
+  geom_surv(aes(col = strata)) +
+  geom_ribbon(aes(ymin = surv_lower, ymax = surv_upper, fill = strata), alpha = .3)
+```
+
+
+## Left truncation
+
+### Example Infant Mortality
+```{r}
+data("infants", package = "eha")
+infants %>% slice(97, 100)
+```
+
+Data transformation to PED format:
+
+```{r}
+ped_lt <- infants %>% as_ped(Surv(enter, exit, event)~.)
+ped_lt %>%
+  filter(id %in% c(97, 100)) %>%
+  select(id, interval, ped_status, mother, sex)
+pam_lt <- pamm(
+  formula = ped_status ~ s(tend, k = 20) + mother + age + sex + parish + civst + ses,
+  data = ped_lt)
+summary(pam_lt)
+# comparison to Weibull AFT and CoxPH
+wb_lt <- eha::phreg(
+  formula = Surv(enter, exit, event) ~ mother + age + sex + parish + civst + ses,
+  data    = infants)
+cph_lt <- coxph(
+  formula = Surv(enter, exit, event) ~ mother + age + sex + parish + civst + ses,
+  data    = infants)
+cbind(
+  cph = exp(coef(cph_lt)),
+  pam = exp(coef(pam_lt)[2:7]),
+  wb  = exp(coef(wb_lt)[1:6]))
+```
+
+
+#### Checking independence assumption of left truncation times
+
+```{r}
+ped_lt <- ped_lt %>%
+  group_by(id) %>%
+  mutate(entry_time = tstart[1]) # here equivalent to childs age at entry
+
+pam_lt2 <- update(pam_lt, .~. + s(entry_time), data = ped_lt)
+summary(pam_lt2)
+cbind(
+  cph  = exp(coef(cph_lt)),
+  pam  = exp(coef(pam_lt)[2:7]),
+  pam2 = exp(coef(pam_lt2)[2:7]),
+  wb   = exp(coef(wb_lt)[1:6]))
+```
