@@ -28,12 +28,11 @@ depends on $t$.
 ---
 # Time-Dependent Covariates: Data Format
 
-PAMMs assume piecewise-constant hazard rate
-$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$
+PAMMs assume piecewise-constant hazard rate  
+$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$  
 $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut points
 
-- `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates and include all necessary cut points.
-
+- `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates and include all necessary cut points.<br><br>
 - Computational effort for Cox PH models becomes a *lot* larger in start-stop format, affects PAMMs less.
 - "Start-stop" data format is also used for interval-censored and left-truncated data, c.f. `survival::survSplit`, `survival::tmerge`
 
@@ -102,8 +101,8 @@ hazard immediately starting from interval $(a_j, a_{j+1}]$, until the next recor
 - covariate value $x_i(t)$ observed at $t = a_j$ affects the
 hazard starting from later interval $(a_j + \texttt{lag}, \ldots]$ until the next (lagged) change in $x$ or end of follow-up.
 
-Much more generally, **pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs, so called
-exposure-lag response associations (ELRA, `r Citet(bib, "bender_penalized_2019")`)
+Much more generally, **pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs
+(*ELRA*: exposure-lag response associations, c.f. `r Citet(bib, "bender_penalized_2019")`)
 
 ---
 # Extended Cox analysis of the `pbc` data
@@ -112,7 +111,7 @@ exposure-lag response associations (ELRA, `r Citet(bib, "bender_penalized_2019")
 temp <- subset(pbc_clean, select = c(id:sex)) # baseline
 pbc2 <- survival::tmerge(temp, temp, id = id, death = event(time, status)) #set range
 pbc2 <- survival::tmerge(pbc2, pbc_seq, id = id, log_bili = tdc(day, log_bili),
-  log_protime = tdc(day, log_protime))
+                         log_protime = tdc(day, log_protime))
 ```
 .pull-left[
 Use baseline measurements only:
@@ -147,10 +146,12 @@ summary(pbc_pam)
 # PAM analysis of the `pbc` data (2)
 
 ```{r pbc-pam2, echo  = TRUE, eval = FALSE, cache= TRUE}
-pammtools::pamm(ped_status ~ s(tend) + log_bili + log_protime, data = pbc_ped)
+pammtools::pamm(ped_status ~ s(tend) + log_bili + log_protime, 
+                data = pbc_ped)
 #equivalent to:
-mgcv::gam(ped_status ~ s(tend) + log_bili + log_protime, data = pbc_ped,
-                     family = poisson(), offset = offset)
+mgcv::gam(ped_status ~ s(tend) + log_bili + log_protime, 
+          data = pbc_ped,
+          family = poisson(), offset = offset)
 ```
 
 Similar results for Cox and PAMM models:

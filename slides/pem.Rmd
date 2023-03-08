@@ -331,7 +331,8 @@ For
 
 $\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
 
-$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy for GLMs
+$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy for (penalized) GLMs or GAMMs:  
+**`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**
 
 ---
 # PEM: Penalized Likelihood & Basis Representation
@@ -361,10 +362,10 @@ p_pam_haz <- p_pem_haz %+% pem_haz_df2 +
 pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM: large J")  + p_pam_haz + ggtitle("PAM: large J")
 ```
 
-- A good strategy is to select cut points at observed event times $t_{(1)},\ldots,t_{(m)}$ (basis functions will be evaluated in regions with many events, i.e., regions with a lot of information about the process)<br>
-- For large $m$, a small subsample will often be sufficient <br>
-- Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still depends on $J$ to some degree) <br>
-- PEMs and PAMMs in **R** facilitated by package **`pammtools`** <br>
-- Various articles (vignettes) on different topics available here: https://adibender.github.io/pammtools/articles/
+- A good strategy is to select cut points at observed event times $t_{(1)},\ldots,t_{(m)}$ (basis functions will be evaluated in regions with many events, i.e., regions with a lot of information about the process)
+- For large $m$, a small subsample will often be sufficient
+- Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still affected by $J$)<br><br>
+- PEMs and PAMMs in **R** facilitated by package **`pammtools`** 
+- Various articles (vignettes) on different topics available at [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/) 
 
 <!-- add tumor example, show add_hazard etc -->
