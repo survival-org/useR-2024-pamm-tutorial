@@ -26,10 +26,10 @@ We can deal with left truncation, by only including subject in the risk after th
 
 **Example: Infant Mortality** (1821–1894):
 - Infants were included in the study when their mother died (left truncation event)
-- Two infants of same age who's mother was still alive were matched into the study
+- Two infants of same age whose mothers were still alive were matched into the study
 - All infants still alive were censored at the end of the study (365 days)
 - Infants that die before their mother never enter the study
-- Hypothesis: infants who's mothers are still alive survive longer
+- Hypothesis: infants whose mothers are still alive survive longer
 
 
 ---
