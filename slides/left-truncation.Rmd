@@ -23,10 +23,10 @@ $$L_i(\bstheta) = P(T=t_i | T \geq y_i, \bstheta) = \frac{f(t_i, \bstheta)}{S(y_
 
 **Example: Infant Mortality**:
 - Infants were included in the study when their mother died (left truncation event)
-- Two infants of same age who's mother was still alive were matched into the study
+- Two infants of same age whose mothers were still alive were matched into the study
 - All infants still alive were censored at the end of the study (365 days)
 - Infants that die before their mother never enter the study
-- Hypothesis: infants who's mothers are still alive survive longer
+- Hypothesis: infants whose mothers are still alive survive longer
 
 
 ---
