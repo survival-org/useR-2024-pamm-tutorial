@@ -45,7 +45,7 @@ Compiled: `r Sys.Date()`
 ```{r input-pem, child = "pem.Rmd", eval = TRUE}  
 ```
 
-<!--simple ex-->
+<!--simple ex: aus der vignette: MGUS data -->
 
 ```{r tdc, child = "time-dependent-covariates.Rmd", eval = TRUE}
 ```
@@ -53,7 +53,7 @@ Compiled: `r Sys.Date()`
 ```{r tve, child = "time-varying-effects.Rmd", eval = TRUE}
 ```
 
-<!-- time-dep ex-->
+<!-- time-dep, stratification ex:  tumor data -->
 
 <!-- lunch -->
 
