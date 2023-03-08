@@ -64,134 +64,37 @@ summary(infants$exit)
 
 ```{r, echo = TRUE}
 infants[1, c("id", "enter", "exit", "event", "mother", "age"), ]
-ped_infants <- infants |> as_ped(Surv(exit, event) ~ ., max_time = 365)
+ped_infants <- infants |> as_ped(Surv(exit, event) ~ .)
 ped_infants |> filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age) |> slice(1, n())
-ped_infants <- infants |> as_ped(Surv(enter, exit, event) ~ ., max_time = 365)
-ped_infants |>filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age)  |> slice(1, n())
+ped_infants_lt <- infants |> as_ped(Surv(enter, exit, event) ~ .)
+ped_infants_lt |>filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age)  |> slice(1, n())
 ```
 
 ---
 # Example: Infant Mortality (3)
-"Naive" analysis: Ignore left-truncation
+
+"Naive" analysis ignoring left-truncation:
+
+```{r echo = TRUE, output.lines = c(8:14, 18:20)}
+pam_infants <- pamm(ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses, data = ped_infants)
+summary(pam_infants) # truncated output
+```
+
 ```{r echo = TRUE}
-pam_infants <- pamm(ped_status ~ s(tend) + mother + sex + age + civst, data = ped_infants)
-summary(pam_infants)
 exp(coef(pam_infants)[2])
 ```
 
 ---
-# Example: Infant Mortality (2)
-
-"Naive" analysis: Ignore left-truncation
-
-```{r, echo = TRUE}
-m1 <- flexsurvreg(Surv(exit, event) ~ mother, data = infants, dist = "weibull")
-coef(m1)
-# (inverse) acceleration factor
-exp(-coef(m1)[3])
-# mean expected survival time:
-newdata = data.frame(mother = factor(c("dead", "alive")))
-summary(m1, newdata, type = "mean") %>% purrr::map(~.x/365)
-```
-
----
-# Example: Infant Mortality (3)
-Accounting for left-truncation:
-
-```{r, echo = TRUE, eval = FALSE}
-m2 <- flexsurvreg(
-  formula = Surv(enter, exit, event, type = "counting") ~ mother,
-  data    = infants,
-  dist    = "weibull")
-# inverse acceleration factor
-cbind(coef = -coef(m2)[3], acf = exp(-coef(m2)[3]))
-summary(m2, newdata, type = "mean") %>% purrr::map(~ .x / 365)
-```
-
----
-# Example: Infant Mortality (3)
-Accounting for left-truncation:
-
-```{r, echo = TRUE, eval = TRUE}
-m2 <- flexsurvreg(
-  formula = Surv(enter, exit, event, type = "counting") ~ mother,
-  data    = infants,
-  dist    = "weibull")
-# inverse acceleration factor
-cbind(coef = -coef(m2)[3], acf = exp(-coef(m2)[3]))
-summary(m2, newdata, type = "mean") %>% purrr::map(~ .x / 365)
-```
-
----
 # Example: Infant Mortality (4)
-Comparison to results from **`eha`** package
+Analysis that takes into account left-truncation:
 
-```{r, echo = TRUE}
-# proportional hazards representation of Weibull model
-m3 <- eha::phreg(Surv(exit, event) ~ mother, data = infants)
-m4 <- eha::phreg(Surv(enter, exit, event) ~ mother, data = infants)
-rbind(
-  cbind(coef = coef(m3)[1], HR = exp(coef(m3)[1])),
-  cbind(coef = coef(m4)[1], HR = exp(coef(m4)[1]))
-)
+```{r echo = TRUE, output.lines = c(8:14, 18:20)}
+pam_infants_lt <- pamm(ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses, data = ped_infants_lt)
+summary(pam_infants) # truncated output
 ```
 
----
-# Example: Infant Mortality (5)
-Coefficient estimates from **`flexsurv`** as hazard ratios
-
-```{r, echo = TRUE}
-# extract shape parameter
-alpha <- 1/exp(-c(coef(m1)[1], coef(m2)[1]))
-# calculate hazard ratio
-exp(-alpha * c(coef(m1)[3], coef(m2)[3]))
-```
-
-
----
-# Example: Infant Mortality (6)
-
-Non-proportionality?
-
-```{r, echo = TRUE}
-m2a <- flexsurvreg(
-  formula = Surv(enter, exit, event, type = "counting") ~ mother,
-  anc     = list(shape = ~mother),
-  data    = infants,
-  dist    = "weibull")
-coef(m2)
-coef(m2a)
-AIC(m2, m2a)
-```
-
-
----
-# Example Infant Mortality (7)
-Further covariates
-
-```{r, echo = TRUE, eval = FALSE}
-m2b <- flexsurvreg(
-  formula = Surv(enter, exit, event, type = "counting") ~ mother + age + sex + parish + civst + ses,
-  data    = infants,
-  dist    = "weibull")
-coef(m2b)
-alpha <- 1/exp(-coef(m2b)[1])
-exp(-alpha * coef(m2b)[-c(1:2)])
-```
-
----
-# Example Infant Mortality (7)
-Further covariates
-
-```{r, echo = TRUE}
-m2b <- flexsurvreg(
-  formula = Surv(enter, exit, event, type = "counting") ~ mother + age + sex + parish + civst + ses,
-  data    = infants,
-  dist    = "weibull")
-coef(m2b)
-alpha <- 1/exp(-coef(m2b)[1])
-exp(-alpha * coef(m2b)[-c(1:2)])
-AIC(m2, m2b)
+```{r echo = TRUE}
+exp(coef(pam_infants_lt)[2])
 ```
 
 
