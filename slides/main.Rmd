@@ -42,7 +42,10 @@ Compiled: `r Sys.Date()`
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
 ```
 
-```{r input-pem, child = "pem.Rmd", eval = TRUE}  
+```{r input-censoring, child="censoring.Rmd", eval = TRUE}
+```
+
+```{r input-pem, child = "pem.Rmd", eval = TRUE}
 ```
 
 <!--simple ex-->
@@ -66,7 +69,7 @@ Compiled: `r Sys.Date()`
 ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
 ```
 
-<!-- ex --> 
+<!-- ex -->
 
 <!-- Bibliography -->
 ```{r input-references, child = "references.Rmd", eval = TRUE}

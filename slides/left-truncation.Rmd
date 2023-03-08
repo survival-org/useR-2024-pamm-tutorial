@@ -19,9 +19,12 @@ class: inverse, middle, center
 Only individuals that experienced an event *after* $y_i$ are observed, i.e., $t_i \geq y_i$.
 
 Likelihood contribution:
-$$L_i(\bstheta) = P(T=t_i | T \geq y_i, \bstheta) = \frac{f(t_i, \bstheta)}{S(y_i, \bstheta)}$$
+$$L_i(\bstheta) = P(T=t_i | T \geq y_i| \bstheta) = \frac{f(t_i| \bstheta)}{S(y_i| \bstheta)}$$
 
-**Example: Infant Mortality**:
+For (non-parametric) hazard based methods: <br>
+We can deal with left truncation, by only including subject in the risk after their left-truncation time
+
+**Example: Infant Mortality** (1821–1894):
 - Infants were included in the study when their mother died (left truncation event)
 - Two infants of same age who's mother was still alive were matched into the study
 - All infants still alive were censored at the end of the study (365 days)
@@ -35,23 +38,45 @@ $$L_i(\bstheta) = P(T=t_i | T \geq y_i, \bstheta) = \frac{f(t_i, \bstheta)}{S(y_
 
 ```{r, echo = TRUE}
 data("infants", package = "eha")
+infants$id <- seq_len(nrow(infants))
 head(infants)
 xtabs(~event + mother, data = infants)
+summary(infants$enter)
 summary(infants$exit)
-infants %>% group_by(mother) %>% summarize(mean = mean(exit - enter), median = median(exit - enter))
 ```
+
+---
+# Left-truncation with PAMMs
+
+- Data transformation:
+  + as usual with `as_ped`, but specify left-truncation time and event time in formula
+  + in each interval, only subjects that were at risks at that time, e.g.
+    * infant enters study at day 5, when mother dies
+    * not included in intervals $(0, 1], \ldots, (4, 5]$
+    * included in intervals $(5, 6]$ ...
+- Modell fit:
+  + as usual based on properly transformed data
+  + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)
 
 
 ---
 # Example: Infant Mortality (2)
 
-"Naive" analysis: Ignore left-truncation
+```{r, echo = TRUE}
+infants[1, c("id", "enter", "exit", "event", "mother", "age"), ]
+ped_infants <- infants |> as_ped(Surv(exit, event) ~ ., max_time = 365)
+ped_infants |> filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age) |> slice(1, n())
+ped_infants <- infants |> as_ped(Surv(enter, exit, event) ~ ., max_time = 365)
+ped_infants |>filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age)  |> slice(1, n())
+```
 
-```{r, echo = TRUE, eval = TRUE}
-library(flexsurv)
-m1 <- flexsurvreg(Surv(exit, event) ~ mother, data = infants, dist = "weibull")
-levels(infants$mother)
-coef(m1)
+---
+# Example: Infant Mortality (3)
+"Naive" analysis: Ignore left-truncation
+```{r echo = TRUE}
+pam_infants <- pamm(ped_status ~ s(tend) + mother + sex + age + civst, data = ped_infants)
+summary(pam_infants)
+exp(coef(pam_infants)[2])
 ```
 
 ---
@@ -60,7 +85,6 @@ coef(m1)
 "Naive" analysis: Ignore left-truncation
 
 ```{r, echo = TRUE}
-library(flexsurv)
 m1 <- flexsurvreg(Surv(exit, event) ~ mother, data = infants, dist = "weibull")
 coef(m1)
 # (inverse) acceleration factor
