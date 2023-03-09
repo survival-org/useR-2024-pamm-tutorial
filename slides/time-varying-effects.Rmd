@@ -177,7 +177,7 @@ different "baseline" hazard for the category encoded by $x_i$.
 ```{r vet-strat-cox, echo =TRUE, fig.height = 3, fig.width = 5, out.height=".4\textheight", warning = TRUE}
 vet_cox_strata <- coxph(Surv(time, status) ~ strata(celltype),
                         data = veteran)
-vet_pam_strata <- pamm(ped_status ~ s(tend) + celltype + s(tend, by = celltype),
+vet_pam_strata <- pamm(ped_status ~ s(tend, by = celltype) + celltype,
                        data = veteran_ped)
 
 # extract fitted cumulative hazards:
@@ -193,7 +193,7 @@ cox_fit <- vet_cox_strata |> basehaz()
 # Example: Flexible time-varying effects (2)
 
 ```{r gg_vet_strata, echo =TRUE, fig.height = 5, fig.width = 7, out.width  = "600px",}
-ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +
+ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +  
     geom_stepribbon(aes(ymin = cumu_lower, ymax = cumu_upper, fill = celltype), alpha = 0.1) +
     geom_line(data = cox_fit, aes(x = time, y = hazard, col = strata), linetype = 4, size = 1) + 
     ylab(expression(hat(H)(t))) + xlab("t") + coord_cartesian(ylim = c(0, 10)) 
