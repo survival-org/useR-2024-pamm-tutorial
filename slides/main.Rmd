@@ -13,7 +13,7 @@ output:
       highlightStyle: zenburn
       highlightLines: true
       countIncrementalSlides: false
-      slideNumberFormat: "%current%"
+      slideNumberFormat: "%current%/%total%"
     css: ["default", "default-fonts", "metropolis-fonts", "ninjutsu", "custom.css"]
 ---
 class: title-slide, middle
