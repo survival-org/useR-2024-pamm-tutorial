@@ -1,0 +1,149 @@
+---
+title: "IWSM 2023 - short course"
+subtitle: "Exercise I: PAMM basics"
+author: "Andreas Bender, Fabian Scheipl"
+---
+
+```{r, echo = FALSE}
+options(width = 120)
+library(knitr)
+opts_chunk$set(
+  fig.align = "center"
+)
+```
+
+
+
+```{r, echo = TRUE, message = FALSE}
+library(pammtools)
+library(mgcv)
+library(ggplot2)
+theme_set(theme_bw())
+library(survival)
+```
+
+The **`pammtools`** package contains the data set `tumor` which contains survival times of patients with stomach area tumors as well as as set of covariates:
+
+- `days`, `status`: survival time and status
+- `charlson_score`: comorbidity score (the higher the worse)
+- `metastases`: ...
+- ...
+
+An overview of the data is given below
+
+```{r, echo = TRUE}
+head(tumor)
+summary(tumor)
+```
+
+
+2. Familiarize yourself with the `as_ped` function. Use it to transform the `tumor`data into the "Piece-wise exponential data" (PED) format.
+
+```{r}
+tumor_ped <- tumor |> as_ped(Surv(days, status) ~ .)
+head(tumor_ped)
+```
+
+
+3. Fit a PAMM (using package **`mgcv`**) that includes all covariates (as linear effects). Look at the summary of the model. Use functions `tidy_fixed` and `gg_fixed` to print and visualize the fixed effects estimates. Interpret the results.
+Visualize the estimated (log-)baseline hazard (using the `mgcv::plot` function)
+
+```{r}
+tumor_pam1 <- gam(
+  formula = ped_status ~ s(tend) + charlson_score + age + sex + transfusion +
+    complications + metastases + resection,
+  data    = tumor_ped,
+  family = "poisson", # don't forget !!!
+  offset  = offset, # don't forget !!!
+  method  = "REML")
+
+# model summary
+summary(pam_ped1)
+# extract coefs + CI's
+tidy_fixed(pam_ped1)
+# forest plot
+gg_fixed(pam_ped1)
+# Hazard Ratios
+exp(coef(pam_ped1)[2:8])
+# log baseline hazard
+plot(pam_ped1)
+```
+
+
+
+4. Fit a Cox model to the same data, compare the estimated covariate effects to the ones obtained from the PAMM fit.
+
+```{r}
+tumor_cox1 <- coxph(Surv(days, status) ~ ., data = tumor)
+tidy_fixed(tumor_cox1)
+tidy_fixed(tumor_pam1)
+cbind(Cox = coef(tumor_cox1), PAMM = coef(tumor_pam1)[2:8])
+```
+
+
+5. Use the `make_newdata` and `add_hazard` function to calculate the hazard ratio of a subject with complications, age = 53 vs. a subject without metastases and age = 47 (everything else being equal)
+
+```{r }
+tumor_ped %>% make_newdata(complications = c("yes"), age = c(53)) %>%
+  add_hazard(tumor_pam1, ref = list(complications = c("no"), age = c(47))) %>%
+  select(hazard, ci_lower, ci_upper)
+```
+
+
+5. Run the `cox.zph` function to check for potential non-proportionality of hazards. What do you conclude?
+
+```{r}
+tumor_zph_cox1 <- cox.zph(tumor_cox1)
+tumor_zph_cox1
+plot(tumor_zph_cox1, var = 5)
+```
+
+
+6. We want to adress the problem with potential non-proportionality of `complications` and `metastases` variables. Create a new variable that represents the interaction of `complications` and `metastases` with four levels (i.e. all combinations of metastases yes/no, complications yes/no). Update your previous PAMM model to have (potentially) different baseline hazards for each of these combinations (i.e. stratification w.r.t. the new variable).
+
+
+```{r}
+tumor_ped <- tumor_ped %>%
+  mutate(strata = interaction(complications, metastases))
+tumor_pam2 <- update(
+  tumor_pam1,
+  . ~ . - s(tend) + s(tend, by = strata),
+  data = tumor_ped)
+summary(tumor_pam2)
+```
+
+
+7. Use the `make_newdata` and `add_hazard` functions to create a data set that contains the estimated hazard for each interval/time-point for each combination of metastases and complications. Use this data set to visualize the four estimated baseline hazards.
+
+```{r}
+ndf_tumor <- tumor_ped %>%
+  make_newdata(tend = unique(tend), strata = unique(strata), age = c(0), sex = c("male"), transfusion = c("no"), resection = c("no")) %>%
+  add_hazard(tumor_pam2)
+
+ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
+  geom_stephazard(aes(col = strata))
+```
+
+8. Now use `add_surv_prob` to add to the data set the estimated survival probabilities and visualize those.
+
+
+```{r}
+ndf_tumor <- ndf_tumor %>%
+  group_by(strata) %>% # !!!! important !!!!
+  add_surv_prob(tumor_pam2, overwrite = TRUE)
+ggplot(ndf_tumor, aes(x = tend, y = surv_prob)) +
+  geom_surv(aes(col = strata)) +
+  ylim(c(0, 1))
+```
+
+
+9. Calculate the time-dependent hazard ratio of a subject with complications and with metastases to a subject without complications with metastases (including confidence intervals) and visualize this hazard ratio over time
+
+```{r}
+ndf_hr <- tumor_ped %>%
+  make_newdata(tend = unique(tend), strata = c("yes.no"))%>%
+  add_hazard(tumor_pam2, reference = list(strata = c("yes.yes")))
+ggplot(ndf_hr, aes(x = tend, y = hazard)) +
+  geom_stephazard() +
+  geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = .3)
+```
