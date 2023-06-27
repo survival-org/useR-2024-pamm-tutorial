@@ -22,7 +22,7 @@ class: inverse, middle, center
 ]
 
 In the Competing Risks setting
-- we are interested in multiple, mutually exclusive, events, e.g. a patient may die from different causes
+- we are interested in multiple, mutually exclusive events, e.g. a patient may die from different causes
 - $0$ transient state; $1,\ldots,K$ absorbing states
 
 
@@ -95,8 +95,8 @@ T & E & \delta & x & \delta_1 & \delta_2 \\ \hline
 ]
 
 
-where the cause-specific hazard estimates for $e = 1$ use a hazard rate model with
-$\delta_1$ and a hazard rate model with $\delta_2$ for $e = 2$.
+where the cause-specific hazard estimates use hazard rate models with
+event indicator $\delta_1$ for $e = 1$ and event indicator $\delta_2$ for $e = 2$.
 
 
 ---
@@ -116,7 +116,7 @@ $$h_e(t|\bfx) = \exp(g(t, e, \bfx))$$
 
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission in intensive care unit patients
 
 The example follows `r Citet(bib, "beyersmann_competing_2012")`: "Competing Risks and Multistate Models with R"
 
@@ -135,7 +135,7 @@ sum(sir.adm$status != 0)
 
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission in intensive care unit patients
 
 Data in PED format:
 
@@ -147,7 +147,7 @@ sum(ped$ped_status)
 ```
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission in intensive care unit patients
 ```{r echo = TRUE}
 ped %>%
   filter(id %in% c(41, 17058)) %>%
@@ -155,18 +155,20 @@ ped %>%
   slice(1, n()) |> kable()
 ```
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission in intensive care unit patients
 ```{r echo = TRUE, output.lines=c(8:13, 17:20)}
 pam <- pamm(ped_status ~ s(tend, by = cause) + cause*pneu, data = ped)
 summary(pam)
 ```
 
 ```{r echo = TRUE}
-round(cbind(Discharge = exp(coef(pam)[3]), Death = exp(sum(coef(pam)[3:4]) )), 2)
+est <- c(Discharge = coef(pam)[3] |> unname(), Death = sum(coef(pam)[3:4]))
+se <- c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
+cbind(estimate = est, hi = est + 2 * se, lo = est - 2*se) |> exp() |> round(2)
 ```
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission inintensive care unit patients
 
 - pneumonia doesn't appear to have an effect on the death hazard
 - this does *not* imply that pneumonia has no effect on mortality
@@ -178,7 +180,7 @@ ndf %>% group_by(cause) %>% slice(1:3) |> kable()
 ```
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission inintensive care unit patients
 
 ```{r echo = TRUE}
 ndf <- ndf %>%
@@ -191,7 +193,7 @@ ndf <- ndf %>%
 ```
 
 ---
-# Example: Pneumonia on admission in intenive care unit patients
+# Example: Pneumonia on admission inintensive care unit patients
 
 ```{r echo = TRUE, fig.width = 8, fig.height = 3, out.width = "600px"}
 # visualization
