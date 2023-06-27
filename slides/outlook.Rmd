@@ -1,0 +1,32 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font150[
+**Outlook**
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+
+---
+# Extensions
+
+- Cumulative Effects
+- Multi-state modeling
+- More backend compatibility (brms, mboost, ..)
+- Joint modelling
+
+---
+# PEMs/PAMMs w/ Machine and Deep Learning
+
+- General Framework, all kinds of Methods usable (see General Framework)
+- DeepPAMM:
+  + Image + other unstructured data
+  + Optimization
+  + etc.
