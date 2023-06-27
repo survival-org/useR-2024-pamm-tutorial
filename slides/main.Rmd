@@ -18,15 +18,17 @@ output:
 ---
 class: title-slide, middle
 
-<br><br><br><br><br><br>
+<br><br><br><br>
 
-<h1 style="color:#1F1414">
-IWSM 2023 - Short Course
-</h1>
+<h2 style="color:#1F1414">
+Piece-wise exponential (Additive) Mixed Model (PAMM)
+</h2>
+<h3 style="color:#1F1414"> IWSM 2023 - Short Course </h3>
 
 .font120[
 Andreas Bender, Fabian Scheipl<br>
-Department of Statistics, LMU Munich
+Department of Statistics, LMU Munich <br>
+Munich Center for Machine Learning (MCML)
 ]
 
 <br>
@@ -37,6 +39,9 @@ Compiled: `r Sys.Date()`
 ```
 
 ```{r input-speakers, child = "speakers.Rmd", eval = TRUE}
+```
+
+```{r input-schedule, child = "schedule.Rmd", eval = TRUE}
 ```
 
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
@@ -67,6 +72,9 @@ Compiled: `r Sys.Date()`
 ```
 
 ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
+```
+
+```{r input-outlook, child = "outlook.Rmd", eval = FALSE}
 ```
 
 <!-- ex -->
