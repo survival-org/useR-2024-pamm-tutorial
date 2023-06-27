@@ -162,8 +162,8 @@ summary(pam)
 ```
 
 ```{r echo = TRUE}
-est <- c(Discharge = coef(pam)[3] |> unname(), Death = sum(coef(pam)[3:4]))
-se <- c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
+est <- c(Discharge = coef(pam)[3] |> unname(),       Death = sum(coef(pam)[3:4]))
+se <-  c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
 cbind(estimate = est, hi = est + 2 * se, lo = est - 2*se) |> exp() |> round(2)
 ```
 
