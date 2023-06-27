@@ -103,7 +103,7 @@ exp(coef(pam_infants_lt)[2])
 
 - So far we only considered transitions from the initial status (e.g., alive) to a single event of interest (e.g., death)
 - However, methods for Lifetime Data Analysis can also be applied to settings with
-multiple states and trasitions between them
+multiple states and transitions between them
 - This more general setting is often refered to as *Event History Analysis*
 .center[
 <img src="figures/event-history-analysis.svg", width="700px">
@@ -116,7 +116,7 @@ multiple states and trasitions between them
 <img src="figures/event-history-analysis.svg", width="600px">
 ]
 - Left-truncation can occur in each of the "0" states
-- In Addition, left truncation is relevant for each (secondary) transition in a Multi-State Model (MSM), e.g.,
-  + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at differnt time points
+- In addition, left truncation is relevant for each (secondary) transition in a multi-state model (MSM), e.g.,
+  + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at different time points
   + Similarly, for transitions "2 $\ra$ 1" and "2 $\ra$ 3"
   + State "3" is a competing risk w.r.t. state "1"

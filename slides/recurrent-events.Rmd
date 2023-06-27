@@ -50,7 +50,7 @@ class: inverse, middle, center
 
 ---
 # Schematic
-An examplary schematic of a reccurr ent events data set for 5 subjects is shown below (source: `r Citet(bib, "amorim_modelling_2015")`)
+An exemplary schematic of a reccurrent events data set for 5 subjects is shown below (source: `r Citet(bib, "amorim_modelling_2015")`)
 
 .center[
 <img src="figures/recurrent-events-schematic.png", width="400px">
@@ -105,7 +105,7 @@ $\qquad \rightarrow$ frailty model
 - Assumption IV: Assumption II and Assumption III <br>
 $\qquad \rightarrow$ frailty model with stratification w.r.t. event number
 - Assumption V: Assumption IV + additional dependency on past <br>
-$\qquad \rightarrow$ frailty model with stratification w.r.t. event number and further, (time-dependent) covariates
+$\qquad \rightarrow$ frailty model with stratification w.r.t. event number and further (time-dependent) covariates
 
 For *calendar timescale*, we obtain the same models with additional consideration of left-truncation
 
@@ -155,7 +155,7 @@ In both models
 See `r Citet(bib, "ramjith.recurrent.2022")` for details
 
 - Data transformation as usual with `as_ped` functions, however
-  + Formula contains information about entry and exit times for risk sets of spefici event number `Surv(start, stop, status)~.`
+  + Formula contains information about entry and exit times for risk sets of specific event number `Surv(start, stop, status)~.`
   + additional `transition` argument indicates the variable in the data that contains information on event number
   + additional `timescale` argument indicates whether data should be transformed to gap-time scale or calendar-time scale
 
