@@ -307,9 +307,6 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 
 - reduce parameter count by *basis function representation* of $h_0(t)$.
 
-
-
-
 ---
 # PEM: Penalized Likelihood
 
@@ -367,5 +364,24 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 - Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still affected by $J$)<br><br>
 - PEMs and PAMMs in **R** facilitated by package **`pammtools`** 
 - Various articles (vignettes) on different topics available at [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/) 
+
+---
+# **`pammtools`**: Important utility functions
+
+*Pre-Processing*: 
+
+- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.  
+Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.  
+
+*Post-Processing*:
+
+- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.  
+  Covariates are set to their sample means or modes by default.
+- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.  
+   Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`
+- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
+- `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
+
+
 
 <!-- add tumor example, show add_hazard etc -->
