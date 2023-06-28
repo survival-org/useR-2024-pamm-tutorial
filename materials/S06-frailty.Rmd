@@ -88,7 +88,7 @@ abline(0, 1, col = 2)
 ## PAMM
 
 ```{r, fig.width = 4, fig.height = 4}
-ped <- patient %>% as_ped(Surv(survhosp, PatientDied) ~ .)
+ped <- patient |> as_ped(Surv(survhosp, PatientDied) ~ .)
 pamm <- mgcv::bam(
   formula =  ped_status ~ s(tend) + Gender + Age + AdmCatID + ApacheIIScore +
     BMI + DiagID2 + s(CombinedicuID, bs = "re"),

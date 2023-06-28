@@ -33,12 +33,12 @@ options(width = 120)
 
 ```{r}
 data("cgd", package = "survival")
-cgd %>% select(-random, -hos.cat, -center) %>% head()
+cgd |> select(-random, -hos.cat, -center) |> head()
 table(cgd$enum)
 ```
 
 ```{r}
-cgd <- cgd %>%
+cgd <- cgd |>
   mutate(
     steroids = as.factor(ifelse(steroids, "yes", "no")),
     gap = tstop - tstart,

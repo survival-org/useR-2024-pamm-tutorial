@@ -81,8 +81,8 @@ An exemplary schematic of a reccurrent events data set for 5 subjects is shown b
 Consider the following example data
 ```{r}
 data("cgd", package = "survival")
-cgd %>% filter(id %in% c(1,7)) %>% select(id, age, tstart, tstop, status, enum) %>%
-  mutate(gap = tstop - tstart) %>%
+cgd |> filter(id %in% c(1,7)) |> select(id, age, tstart, tstop, status, enum) |>
+  mutate(gap = tstop - tstart) |>
   knitr::kable()
 ```
 
@@ -169,7 +169,7 @@ See `r Citet(bib, "ramjith.recurrent.2022")` for details
 
 ```{r, echo = TRUE}
 data("cgd", package = "survival")
-cgd %>% filter(id == 1) %>% select(id, treat, tstart, enum, tstop, status) %>%
+cgd |> filter(id == 1) |> select(id, treat, tstart, enum, tstop, status) |>
   mutate(gap = tstop - tstart)
 table(cgd$enum)
 ```
@@ -181,15 +181,15 @@ table(cgd$enum)
 Transformation to PED format:
 
 ```{r echo = TRUE}
-ped_cgd <- cgd %>%
-  mutate(id = factor(id)) %>% # important for mgcv::gam
+ped_cgd <- cgd |>
+  mutate(id = factor(id)) |> # important for mgcv::gam
   as_ped(
     formula = Surv(tstart, tstop, status) ~ treat,
     id = "id",
     transition = "enum",
-    timescale = "gap") %>%
+    timescale = "gap") |>
   mutate(enum_strata = factor(ifelse(enum > 2, "3+", enum)))
-ped_cgd %>% filter(id == 1) %>% group_by(enum) %>% slice(1, n())
+ped_cgd |> filter(id == 1) |> group_by(enum) |> slice(1, n())
 ```
 
 ---
@@ -228,13 +228,13 @@ summary(pam_cgd2)
 Extract predicted survival probabilities per group:
 
 ```{r, echo = TRUE}
-ndf_cgd <- ped_cgd %>%
-  make_newdata(tend = unique(tend), enum_strata = unique(enum_strata)) %>%
-  add_hazard(pam_cgd2) %>%
-  group_by(enum_strata) %>% # !!! very important
+ndf_cgd <- ped_cgd |>
+  make_newdata(tend = unique(tend), enum_strata = unique(enum_strata)) |>
+  add_hazard(pam_cgd2) |>
+  group_by(enum_strata) |> # !!! very important
   add_surv_prob(pam_cgd2)
-ndf_cgd %>% select(enum_strata, tend, surv_lower, surv_prob, surv_upper) %>%
-  group_by(enum_strata) %>% slice(1, n())
+ndf_cgd |> select(enum_strata, tend, surv_lower, surv_prob, surv_upper) |>
+  group_by(enum_strata) |> slice(1, n())
 ```
 
 ---

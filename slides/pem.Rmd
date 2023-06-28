@@ -289,7 +289,7 @@ In general
 ```{r, est-pem, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
 ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
 pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
-pem_haz_df2 <- int_info(ped2) %>%
+pem_haz_df2 <- int_info(ped2) |>
   mutate(
     hazard = predict(object=pem2, ., type="response"),
     survival = exp(-cumsum(hazard * intlen)))
@@ -350,7 +350,7 @@ $\ra$ In analogy to Piecewise Exponential Models (PEMs), estimated via GLMs, we 
 # PAM: Illustration
 ```{r, est-pam, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("est-pem")}
 pam <- mgcv::gam(ped_status ~ s(tend), data = ped2, family=poisson(), offset=offset)
-pem_haz_df2 <- pem_haz_df2 %>% add_hazard(pam, overwrite = TRUE)
+pem_haz_df2 <- pem_haz_df2 |> add_hazard(pam, overwrite = TRUE)
 p_pam_haz <- p_pem_haz %+% pem_haz_df2 +
   geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) + ylim(c(0, .35))
 ```
@@ -381,7 +381,3 @@ Also merges additional datasets for time-dependent covariates according to the s
    Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`
 - `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
 - `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
-
-
-
-<!-- add tumor example, show add_hazard etc -->

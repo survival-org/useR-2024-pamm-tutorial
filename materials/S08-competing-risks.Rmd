@@ -40,7 +40,7 @@ The example below follows Beyersmann et al. (2008): "Competing Risks and Multist
 
 ```{r}
 data(sir.adm, package = "mvna")
-sir.adm %>% filter(id %in% c(41, 395, 17058))
+sir.adm |> filter(id %in% c(41, 395, 17058))
 table(sir.adm$status)
 sum(sir.adm$status != 0)
 ```
@@ -59,12 +59,12 @@ sum(sir.adm$status != 0)
 cut <- unique(sir.adm$time[sir.adm$status != 0])
 ped_list <- as_ped(sir.adm, Surv(time, status)~., combine = FALSE, cut = cut)
 str(ped_list,1)
-ped_list[[1]] %>%
-  filter(id %in% c(41, 395, 17058)) %>%
-  group_by(id) %>% slice(1, n())
-ped_list[[2]] %>%
-  filter(id %in% c(41, 395, 17058)) %>%
-  group_by(id) %>% slice(1, n())
+ped_list[[1]] |>
+  filter(id %in% c(41, 395, 17058)) |>
+  group_by(id) |> slice(1, n())
+ped_list[[2]] |>
+  filter(id %in% c(41, 395, 17058)) |>
+  group_by(id) |> slice(1, n())
 ```
 
 Note that the total number of events between the two data sets doesn't change
@@ -84,13 +84,13 @@ map_dfc(pam_list, ~round(exp(coef(.x)["pneu"]), 2))
 
 ```{r}
 # combined = TRUE is the default
-ped <- as_ped(sir.adm, Surv(time, status)~., combine = TRUE) %>%
+ped <- as_ped(sir.adm, Surv(time, status)~., combine = TRUE) |>
   mutate(cause = as.factor(cause))
 dim(ped)
 str(ped)
-ped %>%
-  filter(id %in% c(41, 395, 17058)) %>%
-  group_by(id, cause) %>%
+ped |>
+  filter(id %in% c(41, 395, 17058)) |>
+  group_by(id, cause) |>
   slice(1, n())
 
 sum(ped$ped_status)
@@ -109,15 +109,15 @@ round(cbind(Discharge = exp(coef(pam)[3]), Death = exp(sum(coef(pam)[3:4]) )), 2
 - this does *not* imply that pneumonia has no effect on mortality
 
 ```{r, fig.width = 8, fig.height = 3, out.width = "600px"}
-ndf <- ped %>% make_newdata(
+ndf <- ped |> make_newdata(
   tend  = unique(tend),
   pneu  = unique(pneu),
   cause = unique(cause))
-ndf %>% group_by(cause) %>% slice(1:3)
-ndf <- ndf %>%
-  group_by(cause, pneu) %>% # important!
-  add_cif(pam) %>%
-  ungroup() %>%
+ndf |> group_by(cause) |> slice(1:3)
+ndf <- ndf |>
+  group_by(cause, pneu) |> # important!
+  add_cif(pam) |>
+  ungroup() |>
   mutate(
     cause = factor(cause, labels = c("Discharge", "Death")),
     pneu  = factor(pneu, labels = c("No Pneumonia", "Pneumonia"))
