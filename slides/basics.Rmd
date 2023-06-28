@@ -49,19 +49,19 @@ variable $T$ can be described as follows:
 
 ]
 
----
-# Survival in Germany
+<!-- --- -->
+<!-- # Survival in Germany -->
 
-.center[
-<img src="figures/p_sterbealter_de_2009.png", width = "600px">
-]
+<!-- .center[ -->
+<!-- <img src="figures/p_sterbealter_de_2009.png", width = "600px"> -->
+<!-- ] -->
 
----
-# Survival in Germany
+<!-- --- -->
+<!-- # Survival in Germany -->
 
-.center[
-<img src="figures/p_hazard_versterben_de_2009.png" width = "600px">
-]
+<!-- .center[ -->
+<!-- <img src="figures/p_hazard_versterben_de_2009.png" width = "600px"> -->
+<!-- ] -->
 
 ---
 # Hazard, Density and Survival
