@@ -58,15 +58,15 @@ tumor_pam1 <- gam(
   method  = "REML")
 
 # model summary
-summary(pam_ped1)
+summary(tumor_pam1)
 # extract coefs + CI's
-tidy_fixed(pam_ped1)
+tidy_fixed(tumor_pam1)
 # forest plot
-gg_fixed(pam_ped1)
+gg_fixed(tumor_pam1)
 # Hazard Ratios
-exp(coef(pam_ped1)[2:8])
+exp(coef(tumor_pam1)[2:8])
 # log baseline hazard
-plot(pam_ped1)
+plot(tumor_pam1)
 ```
 
 
