@@ -195,7 +195,7 @@ ndf <- ndf %>%
 ---
 # Example: Pneumonia on admission inintensive care unit patients
 
-```{r echo = TRUE, fig.width = 8, fig.height = 3, out.width = "600px"}
+```{r echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
 # visualization
 ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
   geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
