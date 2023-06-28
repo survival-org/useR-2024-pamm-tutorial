@@ -170,15 +170,15 @@ effect of `bili`:
 # the relative risk change (x - \bar{x})'\beta for comparison with predict.coxph
 # (see also Details section in ?predict.coxph)
 reference = sample_info(pbc_ped)
-bili_df <- pbc_ped %>% ungroup() %>%
-  make_newdata(log_bili = seq_range(log_bili, n = 100)) %>%
-  add_term(pbc_pam, term = "log_bili", reference = reference) %>%
+bili_df <- pbc_ped |> ungroup() |>
+  make_newdata(log_bili = seq_range(log_bili, n = 100)) |>
+  add_term(pbc_pam, term = "log_bili", reference = reference) |>
   mutate(cox = predict(pbc_cox_tdc, ., type = "term")[, "log_bili"])
 
 ## Effect of protime
-protime_df <- pbc_ped %>% ungroup() %>%
-  make_newdata(log_protime = seq_range(log_protime, n=100)) %>%
-  add_term(pbc_pam, term = "log_protime", reference = reference) %>%
+protime_df <- pbc_ped |> ungroup() |>
+  make_newdata(log_protime = seq_range(log_protime, n=100)) |>
+  add_term(pbc_pam, term = "log_protime", reference = reference) |>
   mutate(cox = predict(pbc_cox_tdc, ., type = "term")[, "log_protime"])
 
 # visualization

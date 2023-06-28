@@ -9,7 +9,7 @@ hweibull <- function(t, alpha, lambda) {
 alpha <- 1.5
 lambda <- 10
 t <- seq(0, 10, by=.01)
-wb_df <- data.frame(t = t) %>%
+wb_df <- data.frame(t = t) |>
   mutate(
     hazard   = hweibull(t, alpha, lambda),
     survival = pweibull(t, alpha, lambda, lower.tail = FALSE))
@@ -29,7 +29,7 @@ sim_df_weibull <- data.frame(
 
 ped <- as_ped(Surv(time, status)~., cut=seq(0, 10, by = 1), data=sim_df_weibull)
 pem <- glm(ped_status ~ interval, data = ped, family=poisson(), offset=offset)
-pem_haz_df <- int_info(ped) %>%
+pem_haz_df <- int_info(ped) |>
   mutate(
     hazard = predict(object=pem, ., type="response"),
     survival = exp(-cumsum(hazard * intlen)))

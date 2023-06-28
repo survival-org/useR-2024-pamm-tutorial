@@ -84,8 +84,8 @@ cbind(Cox = coef(tumor_cox1), PAMM = coef(tumor_pam1)[2:8])
 5. Use the `make_newdata` and `add_hazard` function to calculate the hazard ratio of a subject with complications, age = 53 vs. a subject without metastases and age = 47 (everything else being equal)
 
 ```{r }
-tumor_ped %>% make_newdata(complications = c("yes"), age = c(53)) %>%
-  add_hazard(tumor_pam1, ref = list(complications = c("no"), age = c(47))) %>%
+tumor_ped |> make_newdata(complications = c("yes"), age = c(53)) |>
+  add_hazard(tumor_pam1, ref = list(complications = c("no"), age = c(47))) |>
   select(hazard, ci_lower, ci_upper)
 ```
 
@@ -103,7 +103,7 @@ plot(tumor_zph_cox1, var = 5)
 
 
 ```{r}
-tumor_ped <- tumor_ped %>%
+tumor_ped <- tumor_ped |>
   mutate(strata = interaction(complications, metastases))
 tumor_pam2 <- update(
   tumor_pam1,
@@ -116,8 +116,8 @@ summary(tumor_pam2)
 7. Use the `make_newdata` and `add_hazard` functions to create a data set that contains the estimated hazard for each interval/time-point for each combination of metastases and complications. Use this data set to visualize the four estimated baseline hazards.
 
 ```{r}
-ndf_tumor <- tumor_ped %>%
-  make_newdata(tend = unique(tend), strata = unique(strata), age = c(0), sex = c("male"), transfusion = c("no"), resection = c("no")) %>%
+ndf_tumor <- tumor_ped |>
+  make_newdata(tend = unique(tend), strata = unique(strata), age = c(0), sex = c("male"), transfusion = c("no"), resection = c("no")) |>
   add_hazard(tumor_pam2)
 
 ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
@@ -128,8 +128,8 @@ ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
 
 
 ```{r}
-ndf_tumor <- ndf_tumor %>%
-  group_by(strata) %>% # !!!! important !!!!
+ndf_tumor <- ndf_tumor |>
+  group_by(strata) |> # !!!! important !!!!
   add_surv_prob(tumor_pam2, overwrite = TRUE)
 ggplot(ndf_tumor, aes(x = tend, y = surv_prob)) +
   geom_surv(aes(col = strata)) +
@@ -140,8 +140,8 @@ ggplot(ndf_tumor, aes(x = tend, y = surv_prob)) +
 9. Calculate the time-dependent hazard ratio of a subject with complications and with metastases to a subject without complications with metastases (including confidence intervals) and visualize this hazard ratio over time
 
 ```{r}
-ndf_hr <- tumor_ped %>%
-  make_newdata(tend = unique(tend), strata = c("yes.no"))%>%
+ndf_hr <- tumor_ped |>
+  make_newdata(tend = unique(tend), strata = c("yes.no"))|>
   add_hazard(tumor_pam2, reference = list(strata = c("yes.yes")))
 ggplot(ndf_hr, aes(x = tend, y = hazard)) +
   geom_stephazard() +

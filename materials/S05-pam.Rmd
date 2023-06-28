@@ -51,7 +51,7 @@ Note that the baseline hazard is estimated via the `interval` variable, which is
 First we transform the data to the PED format:
 
 ```{r, fig.width = 8, fig.height = 4, out.width = "600px"}
-veteran <- veteran %>%
+veteran <- veteran |>
   mutate(
     trt   = 1L * (trt == 2),
     prior = 1L * (prior == 10),
@@ -59,9 +59,9 @@ veteran <- veteran %>%
     time = ifelse(time > 400, 400, time))
 # remove ties to illustrate equivalence with Cox approach
 vetu <- filter(veteran, !duplicated(time))
-ped_vetu <- vetu %>%
+ped_vetu <- vetu |>
   as_ped(Surv(time, status)~., cut = unique(vetu$time), id = "id")
-ped_vetu %>% select(-diagtime) %>% slice(1:6)
+ped_vetu |> select(-diagtime) |> slice(1:6)
 ```
 
 Now we can fit the PEM to the transformed data:
@@ -76,15 +76,15 @@ pem_baseline <- glm(
 )
 coef(pem_baseline)[1:10] # beta0 = log-hazard in interval j=1, beta1 = log(h_2)
 exp(coef(pem_baseline))[1:10]
-pem_smry <- ped_vetu %>%
-  group_by(interval) %>%
+pem_smry <- ped_vetu |>
+  group_by(interval) |>
   summarize(
     t_j        = unique(tend),
     len_j      = unique(tend - tstart),
     d_j        = sum(ped_status),
     n_j        = n(),
     o_j        = sum(exp(offset)),
-    rel_freq_j = d_j/n_j) %>%
+    rel_freq_j = d_j/n_j) |>
   mutate(
     h_j = exp(coef(pem_baseline)),
     H_j = cumsum(h_j * len_j))
@@ -93,7 +93,7 @@ pem_smry |> head()# relative frequency of events in interval j = hazard in inter
 ## relationship to Nelson-Aalen estimator
 cph_baseline <- coxph(Surv(time, status)~1, data = vetu)
 H_cox <- basehaz(cph_baseline)
-pem_smry %>% cbind(H_cox) %>% head()
+pem_smry |> cbind(H_cox) |> head()
 ```
 
 
@@ -157,11 +157,11 @@ pam_karno <- gam(
 ```
 
 ```{r}
-base_pem  <- ped_vetu %>% ped_info() %>% mutate(karno = 0) %>%
+base_pem  <- ped_vetu |> ped_info() |> mutate(karno = 0) |>
   add_hazard(pem_karno)
-base_pam <- ped_vetu %>% ped_info() %>% mutate(karno = 0) %>%
+base_pam <- ped_vetu |> ped_info() |> mutate(karno = 0) |>
   add_hazard(pam_karno)
-base_pam %>% select(tend, interval, karno, hazard, ci_lower, ci_upper)
+base_pam |> select(tend, interval, karno, hazard, ci_lower, ci_upper)
 ggplot(base_pam, aes(x = tend, y = hazard)) +
   geom_stephazard() +
   geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = .3) +
@@ -184,13 +184,13 @@ cbind(
 More covariates:
 
 ```{r}
-mod_list <- list(pem = pem_karno, cph = cph_karno, pam = pam_karno) %>%
+mod_list <- list(pem = pem_karno, cph = cph_karno, pam = pam_karno) |>
   imap(~update(.x, .~. + trt + prior + karno))
 
 # summary output PAM
 summary(mod_list[["pam"]])
 # compare coefficient estimates
-mod_list %>% map_dfr(~coef(.x)[c("trt", "prior", "karno")], .id = "model")
+mod_list |> map_dfr(~coef(.x)[c("trt", "prior", "karno")], .id = "model")
 ```
 
 
@@ -223,7 +223,7 @@ The equivalent PAM is given below:
 
 ```{r}
 # create a covariate that is the assumed transformation of time
-ped <- veteran %>% as_ped(Surv(time, status)~., id = "id") %>%
+ped <- veteran |> as_ped(Surv(time, status)~., id = "id") |>
   mutate(logt20 = log(tstart + (tstart - tend) / 2 + 20))
 # fit the model: pamm is a short cut for gam(..., family = poisson(), offset = offset)
 pam_tt <- pamm(ped_status ~ s(tend) + trt + prior + karno + karno:logt20, data = ped)
@@ -316,8 +316,8 @@ p_tensor + p_slice_karno + p_slice_time
 ```{r}
 data("tumor", package = "pammtools")
 head(tumor)
-ped_tumor <- tumor %>%
-  as_ped(Surv(days, status) ~.) %>%
+ped_tumor <- tumor |>
+  as_ped(Surv(days, status) ~.) |>
   mutate(strata = interaction(complications, metastases))
 ```
 
@@ -346,8 +346,8 @@ summary(pam_strata)
 Visualize the estimated hazards in the 4 groups:
 
 ```{r}
-ndf <- ped_tumor %>%
-  make_newdata(tend = unique(tend), strata = unique(strata)) %>%
+ndf <- ped_tumor |>
+  make_newdata(tend = unique(tend), strata = unique(strata)) |>
   add_hazard(pam_strata)
 ggplot(ndf, aes(x = tend, y = hazard, group = strata)) +
   geom_stephazard(aes(col = strata)) +
@@ -368,8 +368,8 @@ gg_partial(ped_tumor, pam_strata, term = "strata", tend = unique(tend),  strata 
 Visualize survival probabilities in the 4 groups (other covariates set to mean/modus):
 
 ```{r}
-ndf <- ndf %>%
-  group_by(strata) %>% # important!!
+ndf <- ndf |>
+  group_by(strata) |> # important!!
   add_surv_prob(pam_strata)
 ggplot(ndf, aes(x = tend, y = surv_prob, group = strata)) +
   geom_surv(aes(col = strata)) +
@@ -382,15 +382,15 @@ ggplot(ndf, aes(x = tend, y = surv_prob, group = strata)) +
 ### Example Infant Mortality
 ```{r}
 data("infants", package = "eha")
-infants %>% slice(97, 100)
+infants |> slice(97, 100)
 ```
 
 Data transformation to PED format:
 
 ```{r}
-ped_lt <- infants %>% as_ped(Surv(enter, exit, event)~.)
-ped_lt %>%
-  filter(id %in% c(97, 100)) %>%
+ped_lt <- infants |> as_ped(Surv(enter, exit, event)~.)
+ped_lt |>
+  filter(id %in% c(97, 100)) |>
   select(id, interval, ped_status, mother, sex)
 pam_lt <- pamm(
   formula = ped_status ~ s(tend, k = 20) + mother + age + sex + parish + civst + ses,
@@ -413,8 +413,8 @@ cbind(
 #### Checking independence assumption of left truncation times
 
 ```{r}
-ped_lt <- ped_lt %>%
-  group_by(id) %>%
+ped_lt <- ped_lt |>
+  group_by(id) |>
   mutate(entry_time = tstart[1]) # here equivalent to childs age at entry
 
 pam_lt2 <- update(pam_lt, .~. + s(entry_time), data = ped_lt)
