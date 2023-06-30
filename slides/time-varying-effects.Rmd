@@ -146,7 +146,7 @@ $\implies$ assumed shape "good enough" in this case
 
 ---
 # Example: Flexible time-varying effects (2)
-```{r gg_tv_karno, echo =TRUE, fig.height = 3, fig.width = 5, out.height=".4\textheight"}
+```{r gg_tv_karno, echo =TRUE, fig.height = 3, fig.width = 5, out.height= "300px"}
 term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
   mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
   mutate(cox.fit = coef(vet_cox_logt)["karno"] + coef(vet_cox_logt)["tt(karno)"] * log(tend + 20),

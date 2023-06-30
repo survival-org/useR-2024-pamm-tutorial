@@ -164,7 +164,7 @@ summary(pam)
 ```{r echo = TRUE}
 est <- c(Discharge = coef(pam)[3] |> unname(),       Death = sum(coef(pam)[3:4]))
 se <-  c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
-cbind(estimate = est, hi = est + 2 * se, lo = est - 2*se) |> exp() |> round(2)
+cbind(estimate = est, hi = est + 2 * se, lo = est - 2 * se) |> exp() |> round(2)
 ```
 
 ---
@@ -195,7 +195,7 @@ ndf <- ndf |>
 ---
 # Example: Pneumonia on admission inintensive care unit patients
 
-```{r echo = TRUE, fig.width = 8, fig.height = 3, out.width = "600px"}
+```{r echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
 # visualization
 ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
   geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
