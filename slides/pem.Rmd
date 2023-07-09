@@ -227,7 +227,7 @@ $\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
 $\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$,
 $\quad t_j := a_j$
 
-- also known as "start-stop" data format, used for interval-censoring and time-varying covariates in PH models 
+- also known as "start-stop" data format, used for interval-censoring and time-varying covariates in PH models
 
 ---
 # PEM Likelihoood (2)
@@ -289,7 +289,7 @@ In general
 ```{r, est-pem, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
 ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
 pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
-pem_haz_df2 <- int_info(ped2) |>
+pem_haz_df2 <- int_info(ped2) %>%
   mutate(
     hazard = predict(object=pem2, ., type="response"),
     survival = exp(-cumsum(hazard * intlen)))
@@ -328,7 +328,7 @@ For
 
 $\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
 
-$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy for (penalized) GLMs or GAMMs:  
+$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy for (penalized) GLMs or GAMMs:
 **`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**
 
 ---
@@ -362,22 +362,22 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 - A good strategy is to select cut points at observed event times $t_{(1)},\ldots,t_{(m)}$ (basis functions will be evaluated in regions with many events, i.e., regions with a lot of information about the process)
 - For large $m$, a small subsample will often be sufficient
 - Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still affected by $J$)<br><br>
-- PEMs and PAMMs in **R** facilitated by package **`pammtools`** 
-- Various articles (vignettes) on different topics available at [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/) 
+- PEMs and PAMMs in **R** facilitated by package **`pammtools`**
+- Various articles (vignettes) on different topics available at [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/)
 
 ---
 # **`pammtools`**: Important utility functions
 
-*Pre-Processing*: 
+*Pre-Processing*:
 
-- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.  
-Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.  
+- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.
+Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.
 
 *Post-Processing*:
 
-- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.  
+- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
   Covariates are set to their sample means or modes by default.
-- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.  
+- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
    Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`
 - `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
 - `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates

@@ -30,9 +30,8 @@ sim_df_weibull <- data.frame(
 ped <- as_ped(Surv(time, status)~., cut=seq(0, 10, by = 1), data=sim_df_weibull)
 pem <- glm(ped_status ~ interval, data = ped, family=poisson(), offset=offset)
 pem_haz_df <- int_info(ped) |>
-  mutate(
-    hazard = predict(object=pem, ., type="response"),
-    survival = exp(-cumsum(hazard * intlen)))
+  add_hazard(pem) |>
+  add_surv_prob(pem)
 ```
 
 

@@ -28,8 +28,8 @@ depends on $t$.
 ---
 # Time-Dependent Covariates: Data Format
 
-PAMMs assume piecewise-constant hazard rate  
-$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$  
+PAMMs assume piecewise-constant hazard rate
+$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$
 $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut points
 
 - `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates and include all necessary cut points.<br><br>
@@ -146,10 +146,10 @@ summary(pbc_pam)
 # PAM analysis of the `pbc` data (2)
 
 ```{r pbc-pam2, echo  = TRUE, eval = FALSE, cache= TRUE}
-pammtools::pamm(ped_status ~ s(tend) + log_bili + log_protime, 
+pammtools::pamm(ped_status ~ s(tend) + log_bili + log_protime,
                 data = pbc_ped)
 #equivalent to:
-mgcv::gam(ped_status ~ s(tend) + log_bili + log_protime, 
+mgcv::gam(ped_status ~ s(tend) + log_bili + log_protime,
           data = pbc_ped,
           family = poisson(), offset = offset)
 ```
@@ -172,14 +172,14 @@ effect of `bili`:
 reference = sample_info(pbc_ped)
 bili_df <- pbc_ped |> ungroup() |>
   make_newdata(log_bili = seq_range(log_bili, n = 100)) |>
-  add_term(pbc_pam, term = "log_bili", reference = reference) |>
-  mutate(cox = predict(pbc_cox_tdc, ., type = "term")[, "log_bili"])
+  add_term(pbc_pam, term = "log_bili", reference = reference)
+bili_df$cox <- predict(pbc_cox_tdc, bili_df, type = "term")[, "log_bili"]
 
 ## Effect of protime
 protime_df <- pbc_ped |> ungroup() |>
   make_newdata(log_protime = seq_range(log_protime, n=100)) |>
-  add_term(pbc_pam, term = "log_protime", reference = reference) |>
-  mutate(cox = predict(pbc_cox_tdc, ., type = "term")[, "log_protime"])
+  add_term(pbc_pam, term = "log_protime", reference = reference)
+protime_df$cox <- predict(pbc_cox_tdc, protime_df, type = "term")[, "log_protime"]
 
 # visualization
 # remember that bili and protime are log transformed
