@@ -1,0 +1,108 @@
+---
+title: "IWSM 2023 - short course"
+subtitle: "Exercise II: Competing Risks"
+author: "Andreas Bender, Fabian Scheipl"
+---
+
+```{r, echo = FALSE}
+options(width = 120)
+library(knitr)
+opts_chunk$set(
+  fig.align = "center"
+)
+```
+
+
+
+```{r, echo = TRUE, message = FALSE}
+# library(pammtools)
+devtools::load_all("~/Dropbox/GitHub/PAMM/pammtools")
+library(mgcv)
+library(ggplot2)
+theme_set(theme_bw())
+library(survival)
+solution <- TRUE
+```
+
+
+The package **`etm`** contains the `abortion` data set (Meister, R. and Schaefer, C. (2008). *Statistical methods for estimating the probability of spontaneous abortion in observational studies – Analyzing pregnancies exposed to coumarin derivatives*. Reproductive Toxicology, 26, 31–35).
+
+It was collected in a prospective study. 1186 pregnant women were included in order to investigate spontaneous and induced abortions. 173 of them were exposed to *coumarin* derivatives (blood thinner), that are suspected to disturb the development of embryos or fetuses.
+
+The research question of interest was whether and how exposure to *coumarin* affects the pregnancy outcome, which could be one of
+
+- spontaneous abortion
+- induced abortion
+- live birth
+
+
+1. Load and investigate the data
+
+```{r, echo = solution, eval = solution}
+data("abortion", package = "etm")
+head(abortion)
+table(abortion$cause)
+prop.table(xtabs( ~ cause + group, data = abortion), margin = 2)
+```
+
+2. Consider the (implicit) criterion for women to be included into the study.
+What does the analysis have to account for?
+
+
+3. Estimate a PAM and compute the Cumulative incidence function (CIF) for both groups of women, i.e. the ones exposed to coumarin and the ones without exposure (specified by the `group` variable).
+
+
+```{r, echo = solution, eval = solution}
+abortion_ped <- abortion %>%
+  mutate(
+    cause = factor(
+      cause,
+      levels = 1:3,
+      labels = c("induced", "life birth", "spontaneous")),
+    group = factor(
+      group,
+      levels = 0:1,
+      labels = c("control", "coumarin exposure"))
+  ) %>%
+  as_ped(Surv(entry, exit, cause) ~ ., id = "id", combine = TRUE)
+
+abortion_pam <- pamm(
+  formula  = ped_status ~ cause  + s(tend, by = cause) + group,
+  data     = abortion_ped,
+  method   = "fREML",
+  engine   = "bam",
+  discrete = TRUE)
+
+plot(abortion_pam, page = 1)
+summary(abortion_pam)
+tidy_fixed(abortion_pam)
+```
+
+
+4. Visualize the CIFs separately for the coumarin exposure groups and for the
+causes ‘spontaneous abortion’ and ‘induced abortion’.
+
+
+```{r, echo = solution, eval = solution}
+# create new data set for CIF prediction for each covariate specification of interest
+# here we want predictions for
+# - all time points
+# - both causes that indicate abortion (life birth not of interest here)
+# Important!!!:
+# - Data has to be grouped by each separate covariate specifications
+# - Data must be arranged properly (otherwise integration/cumulation will yield results)
+cif_ndf <- abortion_ped %>%
+  make_newdata(
+    tend = unique(tend),
+    cause = unique(cause)[c(1,3)],
+    group = unique(group)
+  ) %>%
+  group_by(cause, group) %>%  # !!! important
+  arrange(tend, cause, group) %>%
+  add_cif(abortion_pam)
+
+ggplot(cif_ndf, aes(x = tend, y = cif)) +
+  geom_line(aes(col = cause)) +
+  facet_wrap(~group) +
+  ylim(c(0, 1))
+```
