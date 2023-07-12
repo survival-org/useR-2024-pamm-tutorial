@@ -15,8 +15,7 @@ opts_chunk$set(
 
 
 ```{r, echo = TRUE, message = FALSE}
-# library(pammtools)
-devtools::load_all("~/Dropbox/GitHub/PAMM/pammtools")
+library(pammtools)
 library(mgcv)
 library(ggplot2)
 theme_set(theme_bw())
