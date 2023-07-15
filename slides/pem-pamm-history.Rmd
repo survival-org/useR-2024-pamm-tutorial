@@ -1,0 +1,18 @@
+
+---
+# A short, incomplete history of PEMs/PAMMs
+
+- **~1980**: Couple of publications, showing equivalence of PEM and Cox Model and how to fit them with standard GLMs `r Citep(bib, c("holford_analysis_1980", "whitehead_fitting_1980", "friedman_piecewise_1982"))`
+
+- **early 2000s**: Mixed Modelling/GAM modelling of PEMs:`r Citep(bib, c("cai_mixed_2002", "kauermann_penalized_2005"))`
+
+- **2015**: `r Citep(bib, c("argyropoulos_analysis_2015"))`: "Analysis of Time to Event Outcomes in Randomized Controlled Trials by Generalized Additive Models" -> specific way of splitting follow-up to reduce number of splits -> `@ChristosArgyrop` at Twitter
+
+- **2018 - today**: some work from ourselves on PEMs/PAMMs, including
+
+  - **`pammtools`** software
+  - Tutorial
+  - cumulative effects/exposure-lag-response associations
+  - competing risks
+  - recurrent events
+  - ML-/DL-based extensions

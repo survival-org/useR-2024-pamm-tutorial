@@ -2,8 +2,8 @@
 ---
 class: inverse, middle, center
 
-.font120[
-**Piecewise Exponential Model (PEM)**
+.font150[
+**Part II: Intro to PEMs and PAMMs**
 ]
 
 <html>
@@ -233,7 +233,7 @@ $\quad t_j := a_j$
 ---
 # PEM Likelihoood (2)
 
-Remember: $h(t|\bfx_i) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) =  \exp(\eta_{ij})$, so $h(t_i|\bfx_i)^{\delta_i} = \prod^J_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right)= \prod^{J_i}_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right).$  
+Remember: $h(t|\bfx_i) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) =  \exp(\eta_{ij})$, so $h(t_i|\bfx_i)^{\delta_i} = \prod^J_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right)= \prod^{J_i}_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right).$
 
 $J_i$ is the interval for which $t_i \in I_{J_i}=(a_{J_i-1},a_{J_i}]$, so
 $$\int_0^{t_i} h(s|\bfx_i) ds
@@ -327,7 +327,7 @@ For
 $\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
 
 $\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy / implementation for (penalized) GLMs or GAMMs:
-**`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**.  
+**`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**.
 
 PEM-representation also allows us to re-use *any* algorithm for time-to-event problems, as long as it can handle Poisson data with offsets (e.g. **`XGboost`** etc, see <a name=cite-bendergeneralMl2021></a>[Bender, Rügamer, Scheipl, and Bischl (2021)](#bib-bendergeneralMl2021)).
 
@@ -377,7 +377,7 @@ Also merges additional datasets for time-dependent covariates according to the s
 
 - `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
   Covariates are set to their sample means or modes by default.
-- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.  
+- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
    Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`
 - `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
 - `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates

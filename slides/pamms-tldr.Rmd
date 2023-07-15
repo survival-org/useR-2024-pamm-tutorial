@@ -1,0 +1,40 @@
+
+---
+# TL;DR
+
+- several survival tasks can be transformed to standard regression tasks
+
+- this is done via data transformation (and mild assumptions, e.g. piece-wise constant hazard)
+
+- exact data transformation depends on the survival task (right-censoring, left-truncation, recurrent events, ...)
+
+- once data is transformed, we estimate the hazard in each interval, conditional on covariates
+- in this setting
+  + *time* is a covariate, the baseline hazard is a function of time
+  + time-varying effects are interactions of other covariates with time
+  + stratified baseline hazards are interactions of time with categorical variables
+
+- any method that can optimize Poisson likelihood with offset can be used for estimation
+
+- GAMMs particularly suitable, especially modelling baseline hazard + time-related effects with splines
+
+
+---
+# TL;DR (2)
+
+R package **`pammtools`** greatly facilitates work with PEMs/PAMMs, as it abtracts away all the fidly handling of data transformation and prediction
+
+
+.center[
+<img src="figures/pammtools-hp.png" height="500px">
+]
+
+---
+# TL;DR (2)
+
+R package **`pammtools`** greatly facilitates work with PEMs/PAMMs, as it abtracts away all the fidly handling of data transformation and prediction
+
+
+.center[
+<img src="figures/pammtools-twitter.png" height="500px">
+]

@@ -2,25 +2,46 @@
 ---
 # Andreas Bender
 
+.pull-left[
+  LMU Munich & <br>
+  Munich Center for Machine Learning (MCML)
+
+  Github: [`adibender`](https://github.com/adibender)
+
+  - PhD @ LMU Munich (2013 - 2018)
+  - PostDoc @ Big Data Institute, University of Oxford (2018 - 2019)
+  - Postdoc at Chair of Statistical Learning and Data Science (since 2019)
+  - Lead Machine Learning Consulting Unit @ MCML (since 2022)
+  - R packages: **`coalitions`**, **`pammtools`**, **`mlr3proba`**
+  - nowadays: (ML-/DL-based) Survival Analysis, Statistical and Machine Learning Consulting, Open Science
+
+]
+
+.pull-right[
+![](figures/)
+]
+
+
 
 ---
 # Fabian Scheipl
 
 .pull-left[
-  LMU Munich &  
-  Munich Center for Machine Learning 
+  LMU Munich & <br>
+  Munich Center for Machine Learning (MCML)
 
   Github: [`fabian-s`](https://github.com/fabian-s?tab=repositories)
-  
-  - PhD @ LMU Munich (2008-2011)  
-    Bayesian Variable Selection for GAMMs: **`spikeSlabGAM`**  
+
+  - PhD @ LMU Munich (2008-2011)
+    Bayesian Variable Selection for GAMMs: **`spikeSlabGAM`**
     GAMM methodology: **`gamm4`**
-  - PostDoc @ LMU Munich (2012-2017)  
-   GAMMs etc. for functional data: **`refund`**, **`FDboost`**, **`tidyfun`**, **`registr`**  
+  - PostDoc @ LMU Munich (2012-2017)
+   GAMMs etc. for functional data: **`refund`**, **`FDboost`**, **`tidyfun`**, **`registr`**
    PAMMs et al.:  **`pammtools`**, **`dlnm`**
   - nowadays: mostly teaching and computational reproducibility,
-    unsupervised methods for functional data 
+    unsupervised methods for functional data
 ]
+
 .pull-right[
 ![](figures/fs.jpg)
 ]

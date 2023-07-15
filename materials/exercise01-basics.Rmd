@@ -5,12 +5,12 @@ author: "Andreas Bender, Fabian Scheipl"
 ---
 
 ```{r, include = FALSE, echo = FALSE}
-solution <- FALSE #!!
+solution <- FALSE#!!
 options(width = 120)
 library(knitr)
 opts_chunk$set(
   fig.align = "center",
-  echo  = solution, 
+  echo  = solution,
   eval = solution
 )
 ```
@@ -49,7 +49,7 @@ head(tumor_ped)
 
 
 3. Fit a PAMM (using package **`mgcv`**) that includes all covariates (as linear effects). Look at the summary of the model. Use functions `tidy_fixed` and `gg_fixed` to print and visualize the fixed effects estimates. Interpret the results.
-Visualize the estimated (log-)baseline hazard (using the `mgcv::plot` function)
+Visualize the estimated (log-)baseline hazard.
 
 ```{r}
 tumor_pam1 <- gam(
@@ -60,6 +60,22 @@ tumor_pam1 <- gam(
   offset  = offset, # don't forget !!!
   method  = "REML")
 
+# alternatively
+tumor_pam1 <- pamm(
+  formula = ped_status ~ s(tend) + charlson_score + age + sex + transfusion +
+    complications + metastases + resection,
+  data = tumor_ped,
+  method = "REML")
+
+# better yet (faster)
+tumor_pam1 <- pamm(
+  formula = ped_status ~ s(tend) + charlson_score + age + sex + transfusion +
+    complications + metastases + resection,
+  data     = tumor_ped,
+  method   = "fREML",
+  engine   = "bam",
+  discrete = TRUE)
+
 # model summary
 summary(tumor_pam1)
 # extract coefs + CI's
@@ -67,12 +83,11 @@ tidy_fixed(tumor_pam1)
 # forest plot
 gg_fixed(tumor_pam1)
 # Hazard Ratios: exp(beta)
-tidy_fixed(tumor_pam1) |> 
+tidy_fixed(tumor_pam1) |>
   mutate(across(where(is.numeric), exp))
 # log baseline hazard
-plot(tumor_pam1)
+plot(tumor_pam1, las = 1)
 ```
-
 
 
 4. Fit a Cox model to the same data, compare the estimated covariate effects to the ones obtained from the PAMM fit.
@@ -133,13 +148,17 @@ ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
   geom_stephazard(aes(col = strata))
 ```
 
-8. Now use `add_surv_prob` to add to the data set the estimated survival probabilities and visualize those.
+8. Now calculate the survival probabilities for all 4 strata using
+  `add_surv_prob`, assuming an average person w.r.t. other covariates.
 
 ```{r}
-ndf_tumor <- ndf_tumor |>
+ndf_tumor2 <- tumor_ped |>
+  make_newdata(# sets other covariates to average/modus values by default
+    tend        = unique(tend),
+    strata      = unique(strata)) |>
   group_by(strata) |> # !!!! important !!!!
   add_surv_prob(tumor_pam2, overwrite = TRUE)
-ggplot(ndf_tumor, aes(x = tend, y = surv_prob)) +
+ggplot(ndf_tumor2, aes(x = tend, y = surv_prob)) +
   geom_surv(aes(col = strata)) +
   ylim(c(0, 1))
 ```

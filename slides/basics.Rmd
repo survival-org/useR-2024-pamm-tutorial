@@ -4,6 +4,22 @@ class: inverse, middle, center
 
 .center[
 .font150[
+**Part I: Introduction**
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+
+
+---
+class: inverse, middle, center
+
+.center[
+.font120[
 **Quantifying duration time distributions**
 ]
 ]
@@ -112,7 +128,7 @@ $$\begin{align*}
 -->
 
 <!-- --- -->
-<!-- 
+<!--
 # Decomposition of Survival Function
 
 We can decompose the survival function in a multiplicative manner.

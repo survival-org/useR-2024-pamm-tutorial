@@ -26,19 +26,19 @@ Examples:
 - whether a tool is made with cheap or high-quality materials begins to affect its risk of failure only after it has been used for a certain amount of time.
 
 **Model for one covariate**
-$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$ 
+$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
 
 Note that the proportional hazard assumption is no longer fulfilled since
-$$\frac{h(t | x)}{h(t | x + 1)} = \exp(\beta(t)):$$ 
+$$\frac{h(t | x)}{h(t | x + 1)} = \exp(\beta(t)):$$
 $\implies$ The hazard ratio becomes a function of time.
 
 ---
 # Modelling Time-Varying Effects: Idea
 
-Main idea:  
+Main idea:
 Define *artificial time-dependent covariates* and fit the model with these time-dependent covariates to represent time-varying effects (TVEs).
 
-Specifically:  
+Specifically:
 $$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)\ ,$$ with basis functions
 depending on t:
 $$h(t |x_i)= h_0(t)\exp\bigg(x_i \sum_\ell \gamma_\ell B_\ell(t)\bigg)=h_0(t)\exp\bigg(\sum_\ell \gamma_\ell (x_i B_\ell(t))\bigg).$$
@@ -52,8 +52,8 @@ Examples:
 - $L=1, B_1(t) \equiv 1$: time-constant effect
 - $L=1, B_1(t) = \log(1 + t)$: logarithmic increase/decrease over time
 
-Much more flexible & fairly assumption-free:  
-- Use $L \gg 1$ 
+Much more flexible & fairly assumption-free:
+- Use $L \gg 1$
 - Use spline basis functions for $B_\ell(t)$
 - Penalize $\gamma_\ell$
 
@@ -63,16 +63,16 @@ Much more flexible & fairly assumption-free:
 $$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)$$
 
 - **Very** easy to include in PAMMs since we already include time $t$ as a covariate for the baseline hazard
-- Time-varying linear effects $x\beta(t)$ simply specified as spline interaction effect `s(<TIME>, by = <X>)` 
+- Time-varying linear effects $x\beta(t)$ simply specified as spline interaction effect `s(<TIME>, by = <X>)`
 - Non-linear time-varying effects $f(x, t)$ specified as tensor product splines `te(<TIME>, <X>)`
 
-Technical point:  
-- PAMMs assume piece-wise constant hazard rates, so $\beta(t)$ actually modelled as a *step function* that only changes at cutpoints $a_j$:  
+Technical point:
+- PAMMs assume piece-wise constant hazard rates, so $\beta(t)$ actually modelled as a *step function* that only changes at cutpoints $a_j$:
 $\beta(t) \equiv \sum^L_{\ell=1} \gamma_\ell B_\ell(a_{j})\; \forall\, t \in (a_{j-1}, a_j]$
 -  for data created with `as_ped`, `tend` is $a_j$:  use `s(tend, by = <X>)`
 
 ---
-# Example: Veterans' Administration Lung Cancer study 
+# Example: Veterans' Administration Lung Cancer study
 
 Randomised trial of survival times under two treatment regimens for lung cancer:
 ```{r vet-load, echo = TRUE}
@@ -86,7 +86,7 @@ We consider TVEs of Karnofsky performance scores at randomisation (`karno`).
 ---
 # Example: Fixed shape for time-variation (1)
 
-Literature suggests time-varying effect of `karno` with  
+Literature suggests time-varying effect of `karno` with
 $f(x_{\text{karno}},t) = \beta_{\text{karno}} x_{\text{karno}} + \beta_{\text{karno},t}x_{\text{karno}}\log(t+20)$
 
 ```{r vet-cox, echo =TRUE}
@@ -98,7 +98,7 @@ coef(vet_cox_logt)
 ```{r, echo=FALSE}
 ttcoef <- round(coef(vet_cox_logt), 3)[3:4]
 ```
-$\implies$ Estimated shape of time variation:  
+$\implies$ Estimated shape of time variation:
 $$\hat\beta_{\text{karno}}+\hat\beta_{\text{karno},t}\cdot\log(t+20) = `r ttcoef[1]` + `r ttcoef[2]`\cdot\log(t+20)$$
 
 ---
@@ -108,12 +108,12 @@ $$\hat\beta_{\text{karno}}+\hat\beta_{\text{karno},t}\cdot\log(t+20) = `r ttcoef
 Equivalent PAM specification:
 ```{r vet-pam, echo =TRUE}
 # data transformation
-veteran_ped <- veteran |> 
+veteran_ped <- veteran |>
     as_ped(Surv(time, status)~., id = "id") |>
     mutate(logt20 = log(tend + 20))
 # fit model
 vet_pam_logt <- pamm(
-  ped_status ~ s(tend) + trt + prior + 
+  ped_status ~ s(tend) + trt + prior +
                  karno + karno:logt20, #!!
   data = veteran_ped
 )
@@ -139,8 +139,7 @@ is estimated from the data:
 vet_pam_tve <- pamm(
   ped_status ~ s(tend) + trt + prior + s(tend, by = karno),
   data = veteran_ped)
-AIC(vet_pam_logt, 
-    vet_pam_tve)
+AIC(vet_pam_logt, vet_pam_tve)
 ```
 $\implies$ assumed shape "good enough" in this case
 
@@ -164,12 +163,13 @@ ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
 
 $$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
 
-If $x_i$ is a dummy variable for a level of a categorical variable, 
+If $x_i$ is a dummy variable for a level of a categorical variable,
 this model is approximately equivalent to a *stratified* PH model with a
-different "baseline" hazard for the category encoded by $x_i$. 
+different "baseline" hazard for the category encoded by $x_i$.
 
 - PAMM formula specification `strata + s(tend, by = strata)` with a factor variable `strata` yields different (baseline) hazard rates for each level of `strata`
-- See `?mgcv::gam.models` and `?mgcv::factor.smoooth` for alternative penalization and centering schemes if `strata` has many levels.
+- See `?mgcv::gam.models` and `?mgcv::factor.smoooth` for alternative penalization and centering schemes if `strata` has many levels
+- Also `r Citet(bib, "pedersen_hierarchical_2019")` for overview of hierarchical GAMs
 
 ---
 # Example: Stratification via factorial TVE
@@ -181,22 +181,22 @@ vet_pam_strata <- pamm(ped_status ~ s(tend, by = celltype) + celltype,
                        data = veteran_ped)
 
 # extract fitted cumulative hazards:
-pam_fit <- veteran_ped |> 
-  ped_info() |> slice(rep(1:n(), each = 4)) |> 
-  mutate(celltype = rep(levels(celltype), times = n()/4)) |> 
+pam_fit <- veteran_ped |>
+  ped_info() |> slice(rep(1:n(), each = 4)) |>
+  mutate(celltype = rep(levels(celltype), times = n()/4)) |>
   group_by(celltype) |> arrange(tend)  |>  #!!
-  add_cumu_hazard(vet_pam_strata) 
-cox_fit <- vet_cox_strata |> basehaz() 
+  add_cumu_hazard(vet_pam_strata)
+cox_fit <- vet_cox_strata |> basehaz()
 ```
 
 ---
 # Example: Flexible time-varying effects (2)
 
 ```{r gg_vet_strata, echo =TRUE, fig.height = 5, fig.width = 7, out.width  = "600px",}
-ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +  
+ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +
     geom_stepribbon(aes(ymin = cumu_lower, ymax = cumu_upper, fill = celltype), alpha = 0.1) +
-    geom_line(data = cox_fit, aes(x = time, y = hazard, col = strata), linetype = 4, size = 1) + 
-    ylab(expression(hat(H)(t))) + xlab("t") + coord_cartesian(ylim = c(0, 10)) 
+    geom_line(data = cox_fit, aes(x = time, y = hazard, col = strata), linetype = 4, size = 1) +
+    ylab(expression(hat(H)(t))) + xlab("t") + coord_cartesian(ylim = c(0, 10))
 ```
 
 ---
@@ -213,7 +213,7 @@ Check for $\beta_2(t) \equiv 0$ with $H_0: \gamma_\ell = 0 \,\forall\, \ell$
 
 Simple z-Test for time-varying effect `karno:logt20`:
 ```{r, echo = TRUE, output.lines = c(1:14)}
-summary(vet_pam_logt) 
+summary(vet_pam_logt)
 ```
 
 ---
@@ -221,13 +221,13 @@ summary(vet_pam_logt)
 Likelihod ratio test for smooth time-varying effect vs time-constant effect:
 ```{r, echo = TRUE}
 vet_pam_const <- update(vet_pam_tve, .~. - s(tend, by = karno) + karno)
-anova(vet_pam_tve, vet_pam_const, test = "Chisq") 
+anova(vet_pam_tve, vet_pam_const, test = "Chisq")
 ```
 
 ---
 # Example: Testing for Proportional Hazards (3)
-Careful:  
+Careful:
 p-values of smooth terms in `summary.gam` are for $H_0:  f(x, t) \equiv 0$, not $H_0:  f(x, t) \equiv x \beta_1$:
 ```{r, echo = TRUE, output.lines = c(1:6, 15:20)}
-summary(vet_pam_tve) 
+summary(vet_pam_tve)
 ```

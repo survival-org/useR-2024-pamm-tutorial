@@ -2,6 +2,20 @@
 ---
 class: inverse, middle, center
 
+.font150[
+**Part IV: Event History Analysis**
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+
+---
+class: inverse, middle, center
+
 .font120[
 **Left truncation**
 ]

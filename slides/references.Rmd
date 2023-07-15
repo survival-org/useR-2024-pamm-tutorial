@@ -6,11 +6,18 @@
 PrintBibliography(bib, start = 1, end = 9)
 ```
 ]
-
 ---
 # References (2)
 .font70[
 ```{r, results = "asis", echo=FALSE, eval=TRUE, cache=FALSE}
-PrintBibliography(bib, start = 10, end = 20)
+PrintBibliography(bib, start = 10, end = 17)
+```
+]
+
+---
+# References (3)
+.font70[
+```{r, results = "asis", echo=FALSE, eval=TRUE, cache=FALSE}
+PrintBibliography(bib, start = 18, end = 25)
 ```
 ]

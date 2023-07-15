@@ -22,8 +22,8 @@ class: inverse, middle, center
 ]
 
 - we are interested in the occurences of multiple, mutually exclusive events, e.g. patients can die from different causes or recover permanently.
-- transient state $0$ 
-- *absorbing* states $1,\ldots,K$ 
+- transient state $0$
+- *absorbing* states $1,\ldots,K$
 
 
 ---
@@ -164,7 +164,7 @@ summary(pam)
 
 ```{r echo = TRUE}
 est <- c(Discharge = coef(pam)[3] |> unname(),       Death = sum(coef(pam)[3:4]))
-se <-  c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
+se <-  c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()
 cbind(estimate = est, lo = est - 2 * se, hi = est + 2 * se) |> exp() |> round(2)
 ```
 
@@ -209,9 +209,9 @@ ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
 ```{r pneu-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
 ```
 
-- Pneumonia reduces the hazard for Discharge  
+- Pneumonia reduces the hazard for Discharge
 $\implies$ subjects admitted with pneumonia stay on ICU longer
 
-- While patients are in the ICU, they are exposed to a hazard for dying there  
-$\implies$ more patients with pneumonia die than patients without pneumonia  
+- While patients are in the ICU, they are exposed to a hazard for dying there
+$\implies$ more patients with pneumonia die than patients without pneumonia
 (even if *direct* effect of `pneu` on cause-specific hazard for death is unclear)
