@@ -4,17 +4,20 @@ subtitle: "Exercise I: PAMM basics"
 author: "Andreas Bender, Fabian Scheipl"
 ---
 
-```{r, echo = FALSE}
+```{r, include = FALSE, echo = FALSE}
+solution <- FALSE #!!
 options(width = 120)
 library(knitr)
 opts_chunk$set(
-  fig.align = "center"
+  fig.align = "center",
+  echo  = solution, 
+  eval = solution
 )
 ```
 
 
 
-```{r, echo = TRUE, message = FALSE}
+```{r, echo = TRUE, eval = TRUE, message = FALSE}
 library(pammtools)
 library(mgcv)
 library(ggplot2)
@@ -31,7 +34,7 @@ The **`pammtools`** package contains the data set `tumor` which contains surviva
 
 An overview of the data is given below
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, eval = TRUE}
 head(tumor)
 summary(tumor)
 ```
@@ -63,8 +66,9 @@ summary(tumor_pam1)
 tidy_fixed(tumor_pam1)
 # forest plot
 gg_fixed(tumor_pam1)
-# Hazard Ratios
-exp(coef(tumor_pam1)[2:8])
+# Hazard Ratios: exp(beta)
+tidy_fixed(tumor_pam1) |> 
+  mutate(across(where(is.numeric), exp))
 # log baseline hazard
 plot(tumor_pam1)
 ```
@@ -130,7 +134,6 @@ ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
 ```
 
 8. Now use `add_surv_prob` to add to the data set the estimated survival probabilities and visualize those.
-
 
 ```{r}
 ndf_tumor <- ndf_tumor |>

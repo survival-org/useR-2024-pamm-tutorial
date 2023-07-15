@@ -51,58 +51,50 @@ $$\delta_i =
 ---
 # Censoring: Type I, II and III
 
-**Type I censoring**:
+**Type I censoring**:  
 All individuals are observed until a fixed time $c$.
 Example: Patients are observed until day 60 after admission to the
 hospital.
 
-**Type II censoring**:
+**Type II censoring**:  
 The study continues until the failure of $r<n$ individuals.
 Rarely used, since an open-ended random study time is generally
 impractical from a management point of view.
 
+**Type III censoring**:  
+We observe $T_i$ if $T_i \leq C_i$.
 
-**Type III censoring**:  We observe $T_i$ if $T_i \leq C_i$.
-
-Assume $T_i$ and $C_i$ are independent:
-$\implies$ **random censoring**
-
-- Example: T: Survival time; C: Time until end of the study
-
-Assume $T_i$ and $C_i$ are not independent:
-$\implies$ **competing risk** censoring
-
-- Example: T: Survival time; C: Time until release from hospital
+- Assume $T_i$ and $C_i$ are independent  
+  $\implies$ **random censoring**  
+    - Example: T: Survival time; C: Time until end of the study
+- Assume $T_i$ and $C_i$ are not independent  
+  $\implies$ **competing risk** censoring  
+    - Example: T: Survival time; C: Time until release from hospital
 
 ---
 # Censoring: other types
 
-**Interval-censoring**:
-The event is known to have occurred in a specific time interval, but the exact time within the interval is unknown.
+**Interval-censoring**:  
+The event is known to have occurred in a specific time interval, but the exact time within the interval is unknown.  
+- Example: An examination is carried out every year. The patient showed up in year 1 and again in year 4. The event was observed to have occured in year 4, but it is unknown when exactly between year 1 and year 4.
 
-Example: An examination is carried out every year. The patient showed up
-in year 1 and again in year 4. The event was observed to have occured in year 4, but it
-is unknown when exactly between year 1 and year 4.
-
-**Left-censoring**:
+**Left-censoring**:  
 The event is known to have occurred earlier than a certain time point, however
 there is no information about how much earlier.
-
-Example: Same setting as above, but the patient was examined for the first time
-in year 4.
-
+- Example: Same setting as above, but the patient was examined for the first time in year 4.
 
 ---
 # Censoring vs. Truncation
 
 It is important to distinguish between **censoring** and **truncation**
 
-- **censoring**: Observation unit is included in the study, but the exact value of the time until the event of interest is unknown
+**Censoring**:  
+Observation unit is included in the study, but the exact time of the event of interest is unknown.
 
-- **truncation**: Observation unit is not included in the study, e.g., because the event occured before begining of study
+**Truncation**:  
+Observation unit is included in the study *conditional* on an event (not) occurring before or after a time point.
 
 - truncation is a form of sampling bias
-
 - Examples:
   + Data regarding the reporting delay (time between symptom onset and reporting of a new case) in the context of COVID-19  is right-truncated: On any given day, cases with long reporting delay are not yet included
   + Lifetimes of inhabitants of retirement homes are left-truncated, as one has to survive until retirement age in order to be eligible for retirement housing

@@ -8,7 +8,7 @@ PrintBibliography(bib, start = 1, end = 9)
 ]
 
 ---
-# References
+# References (2)
 .font70[
 ```{r, results = "asis", echo=FALSE, eval=TRUE, cache=FALSE}
 PrintBibliography(bib, start = 10, end = 20)

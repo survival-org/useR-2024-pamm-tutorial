@@ -15,15 +15,15 @@ class: inverse, middle, center
 
 
 ---
-# Event History Analysis
+# Event History Analysis: Competing Risks Setting
 
 .center[
 <img src="figures/event-history-analysis.svg", width="700px">
 ]
 
-In the Competing Risks setting
-- we are interested in multiple, mutually exclusive events, e.g. a patient may die from different causes
-- $0$ transient state; $1,\ldots,K$ absorbing states
+- we are interested in the occurences of multiple, mutually exclusive events, e.g. patients can die from different causes or recover permanently.
+- transient state $0$ 
+- *absorbing* states $1,\ldots,K$ 
 
 
 ---
@@ -31,7 +31,8 @@ In the Competing Risks setting
 
 Consider two event types $E \in \{1, 2\}$
 
-$$T = \min(T_1,T_2), E = 1 \iff T_1 < T_2$$
+$$T = \min(T_1,T_2)$$
+$$E = 1 \iff T_1 < T_2$$
 
 - event type $E$ with associated event time $T_E$
 
@@ -46,7 +47,7 @@ $$T = \min(T_1,T_2), E = 1 \iff T_1 < T_2$$
 ---
 # Cause-Specific Hazards
 
-We define $T$ as the time to an event $E \in \{1,\ldots,K\}$.
+We define $T$ as the time to any event $E \in \{1,\ldots,K\}$.
 
 The cause-specific hazards are
 $$h_e(t) = \lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}, \; e = 1, \dots, K.$$
@@ -107,12 +108,12 @@ event indicator $\delta_1$ for $e = 1$ and event indicator $\delta_2$ for $e = 2
   + creates one data set per non-censoring event
   + argument `combine` controls whether the separate data sets are retured as list or stacked into one data set with additional column `cause`
 
-- fit cause-specific PAMMs to each data set (or jointly w/ interactions of `cause` variable with other predictors, including time)
+- fit cause-specific PAMMs to each data set (or jointly w/ interactions of `cause` variable with other predictors, including time, and shared effects for others)
 $$h_e(t|\bfx) = \exp(g(t, e, \bfx))$$
 
 - interpretation **conditional on *non-occurrence*** of all competing events <br>
   $\implies$ no (direct) inference on CIF, which is often more relevant
-- however, we can calculate the CIF from the $h_e(t|\bfx), e=1,\ldots, K$
+- however, easy to calculate the CIF from the $h_e(t|\bfx), e=1,\ldots, K$
 
 
 ---
@@ -130,7 +131,7 @@ The example follows `r Citet(bib, "beyersmann_competing_2012")`: "Competing Risk
 data(sir.adm, package = "mvna")
 sir.adm |> filter(id %in% c(41, 395, 17058))
 table(sir.adm$status)
-sum(sir.adm$status != 0)
+sum(sir.adm$status != 0) # observed events
 ```
 
 
@@ -142,8 +143,8 @@ Data in PED format:
 ```{r echo = TRUE}
 ped <- as_ped(sir.adm, Surv(time, status)~ pneu, combine = TRUE) |>
   mutate(cause = as.factor(cause))
-dim(ped)
-sum(ped$ped_status)
+glimpse(ped)
+ped |> group_by(cause) |> summarize(n_cases = sum(ped_status)) # observed events
 ```
 
 ---
@@ -164,13 +165,13 @@ summary(pam)
 ```{r echo = TRUE}
 est <- c(Discharge = coef(pam)[3] |> unname(),       Death = sum(coef(pam)[3:4]))
 se <-  c(Discharge = diag(vcov(pam))[3] |> unname(), Death = sum(vcov(pam)[3:4, 3:4])) |> sqrt()  
-cbind(estimate = est, hi = est + 2 * se, lo = est - 2 * se) |> exp() |> round(2)
+cbind(estimate = est, lo = est - 2 * se, hi = est + 2 * se) |> exp() |> round(2)
 ```
 
 ---
 # Example: Pneumonia on admission inintensive care unit patients
 
-- pneumonia doesn't appear to have an effect on the death hazard
+- pneumonia doesn't appear to have a clear effect on the death hazard
 - this does *not* imply that pneumonia has no effect on mortality
 - We want to calculate the CIF to check effect of pneumonia on probability of death
 
@@ -195,14 +196,22 @@ ndf <- ndf |>
 ---
 # Example: Pneumonia on admission inintensive care unit patients
 
-```{r echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
+```{r pneu-viz, echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
 # visualization
 ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
   geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
   facet_wrap(~cause) + labs(y = "CIF", x = "time", color = "Pneumonia", fill = "Pneumonia")
 ```
 
---
-- Pneumonia reduces the hazard for Discharge $\rightarrow$ subjects admitted with pneumonia stay on ICU longer
-- While they are in the ICU, they are exposed to an unchanged hazard for death
-- As a consequence more patients with pneumonia die than patients without pneumonia
+---
+# Example: Pneumonia on admission inintensive care unit patients
+
+```{r pneu-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
+```
+
+- Pneumonia reduces the hazard for Discharge  
+$\implies$ subjects admitted with pneumonia stay on ICU longer
+
+- While patients are in the ICU, they are exposed to a hazard for dying there  
+$\implies$ more patients with pneumonia die than patients without pneumonia  
+(even if *direct* effect of `pneu` on cause-specific hazard for death is unclear)
