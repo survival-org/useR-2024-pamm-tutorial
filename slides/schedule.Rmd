@@ -4,6 +4,7 @@
 
 .pull-left[
 
+
 | Time          |       Topic                |
 |---------------|----------------------------|
 |09:00 - 09:15  | Welcome                    |
@@ -14,13 +15,16 @@
 |11:30 - 12:00  |Left-truncation|
 |12:00 - 12:30  |Exercise I|
 |12:30 - 13:30  |*Lunch Break*|
+
 ]
 
 .pull-right[
+
 | Time          |       Topic                |
 |---------------|----------------------------|
 |13:30 - 14:30  |Recurrent Events|
 |14:30 - 15:30  |Competing Risks|
 |15:30 - 15:45  |*Coffe Break*|
 |15:45 - 16:45  |Exercise II (Competing Risks)|
+
 ]

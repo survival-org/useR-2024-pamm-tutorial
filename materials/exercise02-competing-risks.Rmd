@@ -8,7 +8,8 @@ author: "Andreas Bender, Fabian Scheipl"
 options(width = 120)
 library(knitr)
 opts_chunk$set(
-  fig.align = "center"
+  fig.align = "center",
+  warning = FALSE
 )
 ```
 
