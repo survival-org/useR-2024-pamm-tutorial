@@ -239,7 +239,10 @@ $J_i$ is the interval for which $t_i \in I_{J_i}=(a_{J_i-1},a_{J_i}]$, so
 $$\int_0^{t_i} h(s|\bfx_i) ds
   = \sum^{J_i}_{j=1} t_{ij}\exp\left(\eta_{ij}\right) =  \sum^{J_i}_{j=1} \exp\left(o_{ij} + \eta_{ij}\right).$$
 We can now rewrite the likelihood as:
-$$L(\bsbeta,\bsbeta_0) = \prod_{i=1}^n \prod_{j=1}^{J_i}
+$$L(\bsbeta,\bsbeta_0) = \prod_{i=1}^n h(t_i|\bfx_i)^{\delta_i} \exp
+    \left(
+      -\int_0^{t_i} h(s|\bfx_i) ds
+    \right) = \prod_{i=1}^n \prod_{j=1}^{J_i}
   \exp \left( \delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
 with log-likelihood
 $$l(\bsbeta,\bsbeta_0) = \log L(\bsbeta,\bsbeta_0) = \sum_{i=1}^n \sum_{j=1}^{J_i} \left(\delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
@@ -260,7 +263,7 @@ l_{Po}(\bsbeta,\bsbeta_0)
 
 $$\Rightarrow l_{Po}(\bsbeta, \bsbeta_0) \propto l(\bsbeta, \bsbeta_0)$$
 
-$\ra$ We can fit a Poisson model to the pseudo-data to obtain ML estimates of $\bsbeta$ `r Citep(bib, c("holford_analysis_1980", "laird_covariance_1981", "friedman_piecewise_1982"))`
+$\ra$ We can **fit a Poisson model to the pseudo-data** to obtain ML estimates of $\bsbeta$ `r Citep(bib, c("holford_analysis_1980", "laird_covariance_1981", "friedman_piecewise_1982"))`
 
 ---
 # PEM: Properties
@@ -329,7 +332,7 @@ $\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
 $\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy / implementation for (penalized) GLMs or GAMMs:
 **`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**.
 
-PEM-representation also allows us to re-use *any* algorithm for time-to-event problems, as long as it can handle Poisson data with offsets (e.g. **`XGboost`** etc, see <a name=cite-bendergeneralMl2021></a>[Bender, Rügamer, Scheipl, and Bischl (2021)](#bib-bendergeneralMl2021)).
+**PEM-representation means we can re-use *any* algorithm that handles Poisson data with offsets for complex time-to-event problems `r Citep(bib, "bender.generalMl.2021", after = "; e.g. XGboost etc.")`.**
 
 ---
 # PEM: Penalized Likelihood & Basis Representation
@@ -343,7 +346,7 @@ with $t_j = a_j\ \forall\, t \in I_j$, $L \ll J$, and typically a first order di
 Since we're fitting a Poisson-Likelihood, this can *easily* be extended by including spatial, non-linear, random or time-varying effects, e.g.
 $$h(t|\bfx_i,\bfz_i) = \exp(g_0(t) + f_1(z_{i1}) + \ldots + f_q(z_{iq}, t) +f_r(t)z_{ir} +  \bfx_i^\top\bsbeta).$$
 
-$\ra$ In analogy to Piecewise Exponential Models (PEMs), estimated via GLMs, we refer to this model class as Piecewise-exponential Additive Mixed Model (PAMM, `r Citet(bib, "bender_generalized_2018")`), estimated via GAMMs
+$\ra$ In analogy to Piecewise Exponential Models (PEMs), estimated via GLMs, we refer to this model class as Piecewise-exponential Additive Mixed Model `r Citep(bib, "bender_generalized_2018", before = "PAMM; ")`, estimated via GAMMs
 
 
 ---
