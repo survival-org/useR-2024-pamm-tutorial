@@ -21,7 +21,7 @@ library(mgcv)
 library(ggplot2)
 theme_set(theme_bw())
 library(survival)
-solution <- FALSE
+solution <- TRUE
 ```
 
 
@@ -103,6 +103,12 @@ cif_ndf <- abortion_ped %>%
 
 ggplot(cif_ndf, aes(x = tend, y = cif)) +
   geom_line(aes(col = cause)) +
+  facet_wrap(~group) +
+  ylim(c(0, 1))
+
+# alternatively:
+ggplot(cif_ndf, aes(x = tend, y = cif, fill = cause)) +
+  geom_area(position = "stack") +
   facet_wrap(~group) +
   ylim(c(0, 1))
 ```
