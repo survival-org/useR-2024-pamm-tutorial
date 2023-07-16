@@ -5,7 +5,7 @@ author: "Andreas Bender, Fabian Scheipl"
 ---
 
 ```{r, include = FALSE, echo = FALSE}
-solution <- FALSE#!!
+solution <- TRUE#!!
 options(width = 120)
 library(knitr)
 opts_chunk$set(
@@ -53,7 +53,7 @@ Visualize the estimated (log-)baseline hazard.
 
 ```{r}
 tumor_pam1 <- gam(
-  formula = ped_status ~ s(tend) + charlson_score + age + sex + transfusion +
+  formula = ped_status ~ s(tend, k = 20) + charlson_score + age + sex + transfusion +
     complications + metastases + resection,
   data    = tumor_ped,
   family = "poisson", # don't forget !!!
@@ -126,7 +126,7 @@ tumor_ped <- tumor_ped |>
   mutate(strata = interaction(complications, metastases))
 tumor_pam2 <- update(
   tumor_pam1,
-  . ~ . - s(tend) + s(tend, by = strata),
+  . ~ . - s(tend) - metastases - complications + strata +s(tend, by = strata),
   data = tumor_ped)
 summary(tumor_pam2)
 ```
