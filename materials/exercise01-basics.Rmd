@@ -5,7 +5,7 @@ author: "Andreas Bender, Fabian Scheipl"
 ---
 
 ```{r, include = FALSE, echo = FALSE}
-solution <- FALSE#!!
+solution <- TRUE#!!
 options(width = 120)
 library(knitr)
 opts_chunk$set(
@@ -126,7 +126,7 @@ tumor_ped <- tumor_ped |>
   mutate(strata = interaction(complications, metastases))
 tumor_pam2 <- update(
   tumor_pam1,
-  . ~ . - s(tend) + s(tend, by = strata),
+  . ~ . - s(tend) + s(tend, by = strata) + strata - complications - metastases,
   data = tumor_ped)
 summary(tumor_pam2)
 ```
@@ -145,7 +145,8 @@ ndf_tumor <- tumor_ped |>
   add_hazard(tumor_pam2)
 
 ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
-  geom_stephazard(aes(col = strata))
+  geom_stephazard(aes(col = strata)) + 
+  geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper, fill = strata), alpha = .1)
 ```
 
 8. Now calculate the survival probabilities for all 4 strata using
