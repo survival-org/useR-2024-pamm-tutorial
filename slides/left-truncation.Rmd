@@ -90,7 +90,9 @@ ped_infants_lt |>filter(id == 1) |> select(tstart, tend, interval, ped_status, m
 "Naive" analysis ignoring left-truncation:
 
 ```{r echo = TRUE, output.lines = c(8:14, 18:20)}
-pam_infants <- pamm(ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses, data = ped_infants)
+pam_infants <- pamm(
+  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
+  data = ped_infants)
 summary(pam_infants) # truncated output
 ```
 
@@ -102,10 +104,14 @@ exp(coef(pam_infants)[2])
 # Example: Infant Mortality (4)
 Analysis that takes into account left-truncation:
 
+.font90[
 ```{r echo = TRUE, output.lines = c(8:14, 18:20)}
-pam_infants_lt <- pamm(ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses, data = ped_infants_lt)
+pam_infants_lt <- pamm(
+  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
+  data = ped_infants_lt)
 summary(pam_infants_lt) # truncated output
 ```
+]
 
 ```{r echo = TRUE}
 exp(coef(pam_infants_lt)[2])
