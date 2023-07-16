@@ -50,7 +50,7 @@ $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut p
 
 - `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates and include all necessary cut points.<br><br>
 - Computational effort for Cox PH models becomes a *lot* larger in start-stop format, affects PAMMs less.
-- "Start-stop" data format is also used for interval-censored and left-truncated data, c.f. `survival::survSplit`, `survival::tmerge`
+- "Start-stop" data format is also used for left-truncated data and time-dependent covariates in the Cox model, c.f. `survival::survSplit`, `survival::tmerge`
 
 
 ---

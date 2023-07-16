@@ -41,13 +41,13 @@ Compiled: `r Sys.Date()`
 ```{r input-speakers, child = "speakers.Rmd", eval = TRUE}
 ```
 
-```{r input-schedule, child = "schedule.Rmd", eval = TRUE}
-```
-
 ```{r input-pem-pamm-history, child = "pem-pamm-history.Rmd", eval = TRUE}
 ```
 
 ```{r input-tldr, child = "pamms-tldr.Rmd", eval = TRUE}
+```
+
+```{r input-schedule, child = "schedule.Rmd", eval = TRUE}
 ```
 
 ```{r input-basics, child="basics.Rmd", eval = TRUE}

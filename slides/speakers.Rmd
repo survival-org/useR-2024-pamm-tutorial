@@ -1,29 +1,5 @@
 
 ---
-# Andreas Bender
-
-.pull-left[
-  LMU Munich & <br>
-  Munich Center for Machine Learning (MCML)
-
-  Github: [`adibender`](https://github.com/adibender)
-
-  - PhD @ LMU Munich (2013 - 2018)
-  - PostDoc @ Big Data Institute, University of Oxford (2018 - 2019)
-  - Postdoc at Chair of Statistical Learning and Data Science (since 2019)
-  - Lead Machine Learning Consulting Unit @ MCML (since 2022)
-  - R packages: **`coalitions`**, **`pammtools`**, **`mlr3proba`**
-  - nowadays: (ML-/DL-based) Survival Analysis, Statistical and Machine Learning Consulting, Open Science
-
-]
-
-.pull-right[
-![](figures/)
-]
-
-
-
----
 # Fabian Scheipl
 
 .pull-left[
@@ -44,4 +20,29 @@
 
 .pull-right[
 ![](figures/fs.jpg)
+]
+
+
+
+
+---
+# Andreas Bender
+
+.pull-left[
+  LMU Munich & <br>
+  Munich Center for Machine Learning (MCML)
+
+  Github: [`adibender`](https://github.com/adibender)
+
+  - PhD @ LMU Munich (2013 - 2018)
+  - PostDoc @ Big Data Institute, University of Oxford (2018 - 2019)
+  - Postdoc at Chair of Statistical Learning and Data Science (since 2019)
+  - Lead Machine Learning Consulting Unit @ MCML (since 2022)
+  - R packages: **`coalitions`**, **`pammtools`**, **`mlr3proba`**
+  - nowadays: (ML-/DL-based) Survival Analysis, Statistical and Machine Learning Consulting, Open Science
+
+]
+
+.pull-right[
+![](figures/ab.jpg)
 ]

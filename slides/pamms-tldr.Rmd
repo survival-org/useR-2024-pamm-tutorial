@@ -38,3 +38,19 @@ R package **`pammtools`** greatly facilitates work with PEMs/PAMMs, as it abtrac
 .center[
 <img src="figures/pammtools-twitter.png" height="500px">
 ]
+
+
+
+---
+# Materials
+
+All materials used today are available from: https://tinyurl.com/3znv3drc
+
+.center[
+
+<img src="figures/share-qr.png">
+
+]
+
+
+For the exercises, make sure you have the newest version of **`pammtools`** (0.5.92) installed
