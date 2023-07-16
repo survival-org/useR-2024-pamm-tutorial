@@ -104,7 +104,7 @@ Analysis that takes into account left-truncation:
 
 ```{r echo = TRUE, output.lines = c(8:14, 18:20)}
 pam_infants_lt <- pamm(ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses, data = ped_infants_lt)
-summary(pam_infants) # truncated output
+summary(pam_infants_lt) # truncated output
 ```
 
 ```{r echo = TRUE}

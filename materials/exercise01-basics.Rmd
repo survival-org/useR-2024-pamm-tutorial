@@ -145,7 +145,8 @@ ndf_tumor <- tumor_ped |>
   add_hazard(tumor_pam2)
 
 ggplot(ndf_tumor, aes(x = tend, y = hazard)) +
-  geom_stephazard(aes(col = strata))
+  geom_stephazard(aes(col = strata)) +
+  geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper, fill = strata), alpha = .1)
 ```
 
 8. Now calculate the survival probabilities for all 4 strata using
