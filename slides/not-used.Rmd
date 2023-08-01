@@ -1,0 +1,84 @@
+
+
+# Example: Chronic Granulotamous Disease (CGD)
+
+- RCT for effect of interferon gamma (treatment) on patients with CGD
+- CGD is an inherited disorder that manifests in recurrent infections (with skin leasons)
+
+```{r, echo = TRUE}
+data("cgd", package = "survival")
+cgd |> filter(id == 1) |> select(id, treat, tstart, enum, tstop, status) |>
+  mutate(gap = tstop - tstart)
+table(cgd$enum)
+```
+
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+Transformation to PED format:
+
+```{r echo = TRUE}
+ped_cgd <- cgd |>
+  mutate(id = factor(id)) |> # important for mgcv::gam
+  as_ped(
+    formula = Surv(tstart, tstop, status) ~ treat,
+    id = "id",
+    transition = "enum",
+    timescale = "gap") |>
+  mutate(enum_strata = factor(ifelse(enum > 2, "3+", enum)))
+ped_cgd |> filter(id == 1) |> group_by(enum) |> slice(1, n())
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+Fitting the model $\lambda(t|b_i) = \exp(\beta_0 + f_0(t) + \beta_1 x_{treat} + \ b_i),$ with
+- $\beta_0 + f_0(t)$: baseline hazard
+- $\beta_1$: treatment effect
+- $b_i \sim N(0, \sigma_{b}^2)$: frailty/random intercept
+
+
+```{r echo = TRUE, output.lines = c(8:11, 15:18)}
+pam_cgd <- pamm(ped_status ~ s(tend) + treat + s(id, bs = "re"), data = ped_cgd)
+summary(pam_cgd)
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+```{r echo = TRUE, fig.width = 5, out.width = "400px", fig.keep = "last"}
+qq_cgd <- gg_re(pam_cgd)
+qq_cgd
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+Fitting the model $\lambda(t|k, b_i) = \exp(\beta_{0k} + f_{0k}(t) + \beta_1 x_{treat} + \ b_i),$ with
+- $\beta_{0k} + f_{0k}$: recurrence specific log baseline hazard
+
+```{r echo = TRUE, output.lines = c(9:15, 19:25)}
+pam_cgd2 <- pamm(ped_status ~ enum_strata + s(tend, by = enum_strata) + treat + s(id, bs = "re"), data = ped_cgd)
+summary(pam_cgd2)
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+Extract predicted survival probabilities per group:
+
+```{r, echo = TRUE}
+ndf_cgd <- ped_cgd |>
+  make_newdata(tend = unique(tend), enum_strata = unique(enum_strata)) |>
+  add_hazard(pam_cgd2) |>
+  group_by(enum_strata) |> # !!! very important
+  add_surv_prob(pam_cgd2)
+ndf_cgd |> select(enum_strata, tend, surv_lower, surv_prob, surv_upper) |>
+  group_by(enum_strata) |> slice(1, n())
+```
+
+---
+# Example: Chronic Granulotamous Disease (CGD)
+
+```{r echo = TRUE, fig.width = 7, out.width = "600px"}
+ggplot(ndf_cgd, aes(x = tend, y = surv_prob)) +
+  geom_surv(aes(col = enum_strata))
+```

@@ -9,7 +9,7 @@ options(width = 120)
 library(knitr)
 opts_chunk$set(
   fig.align = "center",
-  warning = FALSE
+  warning   = FALSE
 )
 ```
 
