@@ -291,6 +291,7 @@ In general
 ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
 pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
 pem_haz_df2 <- int_info(ped2) %>%
+  mutate(offset = intlen) %>%
   mutate(
     hazard = predict(object=pem2, ., type="response"),
     survival = exp(-cumsum(hazard * intlen)))
