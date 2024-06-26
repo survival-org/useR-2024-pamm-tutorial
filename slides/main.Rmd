@@ -2,8 +2,8 @@
 background-color: whitesmoke
 title: ""
 subtitle: ""
-author: ["Andreas Bender",
-"Dpartment of Statistics, LMU MUnich"]
+author: ["Johannes Piller",
+"Department of Statistics, LMU Munich"]
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -23,10 +23,10 @@ class: title-slide, middle
 <h2 style="color:#1F1414">
 Piece-wise exponential (Additive) Mixed Model (PAMM)
 </h2>
-<h3 style="color:#1F1414"> IWSM 2023 - Short Course </h3>
+<h3 style="color:#1F1414"> useR! Salzburg - Webinar </h3>
 
 .font120[
-Andreas Bender, Fabian Scheipl<br>
+Johannes Piller, Andreas Bender<br>
 Department of Statistics, LMU Munich <br>
 Munich Center for Machine Learning (MCML)
 ]
@@ -41,13 +41,7 @@ Compiled: `r Sys.Date()`
 ```{r input-speakers, child = "speakers.Rmd", eval = TRUE}
 ```
 
-```{r input-pem-pamm-history, child = "pem-pamm-history.Rmd", eval = TRUE}
-```
-
 ```{r input-tldr, child = "pamms-tldr.Rmd", eval = TRUE}
-```
-
-```{r input-schedule, child = "schedule.Rmd", eval = TRUE}
 ```
 
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
@@ -74,10 +68,10 @@ Compiled: `r Sys.Date()`
 ```{r left-truncation, child = "left-truncation.Rmd", eval = TRUE}
 ```
 
-```{r input-recurrent, child = "recurrent-events.Rmd", eval = TRUE}
+```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
 ```
 
-```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
+```{r input-ms, child = "multi-state.Rmd", eval = TRUE}
 ```
 
 ```{r input-outlook, child = "outlook.Rmd", eval = TRUE}

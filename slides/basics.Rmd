@@ -13,23 +13,6 @@ class: inverse, middle, center
   <hr color='#005500' size=2px width=900px>
 </html>
 
-
-
----
-class: inverse, middle, center
-
-.center[
-.font120[
-**Quantifying duration time distributions**
-]
-]
-
-<html>
-  <div style='float:left'></div>
-  <hr color='#005500' size=2px width=900px>
-</html>
-
-
 ---
 # General setting
 
@@ -37,7 +20,8 @@ We are interested in:
 
 -   time span,
 -   survival time,
--   duration
+-   duration,
+-   transition probability
 
 End of the time span defined by occurence of an **event**.
 
@@ -65,80 +49,21 @@ variable $T$ can be described as follows:
 
 ]
 
-<!-- --- -->
-<!-- # Survival in Germany -->
-
-<!-- .center[ -->
-<!-- <img src="figures/p_sterbealter_de_2009.png", width = "600px"> -->
-<!-- ] -->
-
-<!-- --- -->
-<!-- # Survival in Germany -->
-
-<!-- .center[ -->
-<!-- <img src="figures/p_hazard_versterben_de_2009.png" width = "600px"> -->
-<!-- ] -->
 
 ---
-# Hazard, Density and Survival
+# **`pammtools`**: Hazard, Density and Survival ... important utility functions are implemented
 
-The quantities $f(t)$, $F(t)$, $S(t)$,
-$h(t)$ and $H(t)$ are related and uniquely define a
-distribution through:
+*Pre-Processing*:
 
-$$\begin{align}
- h(t)
-  & = \frac{f(t)}{1-F(t)}=\frac{f(t)}{S(t)}\\
-S(t)
-  & =\exp(- H(t))=\exp\left(-\int_0^t h(u) du \right)\\
-f(t)
-  & = - \frac{d}{dt} S(t)
-\end{align}$$
+- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.
+Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.
 
+*Post-Processing*:
 
-<!-- TODO: censoring, likelihood under censoring -->
+- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
+  Covariates are set to their sample means or modes by default.
+- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
+   Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`, `add_trans_prob`
+- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
+- `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
 
-<!-- --- -->
-<!--
-# Proofs
-
-$$\begin{align*}
-h(t)  &= \lim_{\Delta t\searrow 0} \frac{1}{\Delta t} P(t\leq T<t+\Delta t\,|\,T\geq t)\\
-            &= \lim_{\Delta t\searrow 0}\frac{1}{\Delta t}\frac{P(\{t\leq T<t+\Delta t\} \cap \{T\geq t\})}{P(T\geq t)}\\
-            &= \lim_{\Delta t\searrow 0}\frac{1}{\Delta t}\cdot
-            \frac{P(t\leq T < t+\Delta t)}{P(T\geq t)}\\
-            &= \underbrace{\lim_{\Delta t\searrow 0}\frac{F(t+\Delta t)-F(t)}{\Delta t}}_{f(t)}\cdot \frac{1}{S(t)} \\
-           & =\frac{f(t)}{S(t)}
-\end{align*}$$
--->
-
-
-<!-- --- -->
-<!--
-# Proofs (2)
-
-$$\begin{align*}
- H(t)  &= \int_0^th(u) du = \int_0^t \frac{f(u)}{S(u)} du = \int_0^t \frac{f(u)}{1-F(u)} du\\
-             &\stackrel{*}{=} -\left[\log\left(1-F(u)\right)\right]_0^t = -\log\left(1-F(t)\right) \\
-             &  \qquad \stackrel{*}{} \mbox{since } \int \frac{g'(x)}{g(x)} dx = \log(g(x)) \\
-             &= -\log\left(S(t)\right) \\
- \Leftrightarrow  S(t) & =\exp\left(-H(t)\right)\\[2em]
- f(t)        &=\frac{dF(t)}{dt}=\frac{d(1 - S(t))}{dt}=-\frac{d}{dt} S(t)
-\end{align*}$$
--->
-
-<!-- --- -->
-<!--
-# Decomposition of Survival Function
-
-We can decompose the survival function in a multiplicative manner.
-
-Note that
-
-$$\begin{align*}
-H(\tilde{t}) - H(t)          &= - \log(S(\tilde{t})) - (-\log(S(t))) = \log(S(t)) - \log(S(\tilde{t}))\\
-\exp(H(\tilde{t}) - H(t))    &= \frac{S(t)}{S(\tilde{t})} \\
-\exp(-[H(\tilde{t}) - H(t)]) &= \frac{S(\tilde{t})}{S(t)},\ \text{or}\\
-S(\tilde{t})                 &= S(t)\exp(-[H(\tilde{t})-H(t)])
-\end{align*}$$
--->

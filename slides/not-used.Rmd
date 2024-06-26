@@ -82,3 +82,783 @@ ndf_cgd |> select(enum_strata, tend, surv_lower, surv_prob, surv_upper) |>
 ggplot(ndf_cgd, aes(x = tend, y = surv_prob)) +
   geom_surv(aes(col = enum_strata))
 ```
+
+```{r input-pem-pamm-history, child = "pem-pamm-history.Rmd", eval = TRUE}
+```
+
+---
+# TL;DR (2)
+
+R package **`pammtools`** greatly facilitates work with PEMs/PAMMs, as it abtracts away all the fidly handling of data transformation and prediction
+
+
+.center[
+<img src="figures/pammtools-twitter.png" height="500px">
+]
+
+
+---
+# Materials
+
+All materials used today are available from: https://tinyurl.com/3znv3drc
+
+.center[
+
+<img src="figures/share-qr.png">
+
+]
+
+
+For the exercises, make sure you have the newest version of **`pammtools`** (0.5.92) installed
+
+
+---
+# Hazard, Density and Survival
+
+The quantities $f(t)$, $F(t)$, $S(t)$,
+$h(t)$ and $H(t)$ are related and uniquely define a
+distribution through:
+
+$$\begin{align}
+ h(t)
+  & = \frac{f(t)}{1-F(t)}=\frac{f(t)}{S(t)}\\
+S(t)
+  & =\exp(- H(t))=\exp\left(-\int_0^t h(u) du \right)\\
+f(t)
+  & = - \frac{d}{dt} S(t)
+\end{align}$$
+
+
+---
+class: inverse, middle, center
+
+.center[
+.font120[
+**Quantifying duration time distributions**
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+
+---
+# Right Censoring
+
+Denote with
+
+$$\begin{align*}
+T_i  &\sim F \text{ duration times}\\
+C_i  &\sim G \text{ censoring times}\\
+\end{align*}$$
+
+with $F$ and $G$ distributions on $\mathbb{R}^+$.
+
+We can only observe
+
+$$t_i  =\min (T_i,C_i)$$
+
+and define the event/censoring indicator
+$$\delta_i =
+  \begin{cases} 1,\; \mbox{$t_i=T_i$}\\
+  0,\; \mbox{$t_i=C_i$}
+  \end{cases}$$
+
+---
+# Censoring: Type I, II and III
+
+**Type I censoring**:
+All individuals are observed until a fixed time $c$.
+Example: Patients are observed until day 60 after admission to the
+hospital.
+
+**Type II censoring**:
+The study continues until the failure of $r<n$ individuals.
+Rarely used, since an open-ended random study time is generally
+impractical from a management point of view.
+
+**Type III censoring**:
+We observe $T_i$ if $T_i \leq C_i$.
+
+- Assume $T_i$ and $C_i$ are independent
+  $\implies$ **random censoring**
+    - Example: T: Survival time; C: Time until end of the study
+- Assume $T_i$ and $C_i$ are not independent
+  $\implies$ **competing risk** censoring
+    - Example: T: Survival time; C: Time until release from hospital
+
+
+---
+# PEM Likelihoood
+The full likelihood for right-censored data is then
+$$\begin{align*}
+L(\bsbeta,\bsbeta_0)
+  &= \prod_{i=1}^n f(t_i|\bfx_i)^{\delta_i} S(t_i|\bfx_i)^{1-\delta_i} = \prod_{i=1}^n h(t_i|\bfx_i)^{\delta_i} \exp
+    \left(
+      -\int_0^{t_i} h(s|\bfx_i) ds
+    \right).
+\end{align*}$$
+<!--where $\bsbeta_0 = (\beta_{01},\ldots,\beta_{0J})$. <br>-->
+Since $h(s|\bfx_i)$ is piecewise constant, the integral in the (log-)likelihood is easy to compute.  <br>
+
+We define pseudo-data
+
+- event in interval $I_j$: $\delta_{ij} = \begin{cases} 1 & t_i \in I_j \mbox{ and } \ \delta_i = 1\\ 0 & \mbox{ else} \end{cases}$
+
+- time at risk in interval $I_j$: $t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\\ 0 & t_i \leq a_{j-1} \end{cases}$
+
+- "offset": $o_{ij} = \log t_{ij} \quad (o_{ij} = -\infty \mbox{ for } t_{ij} = 0)$
+
+---
+# PEM Likelihoood (2)
+
+Remember: $h(t|\bfx_i) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) =  \exp(\eta_{ij})$, so $h(t_i|\bfx_i)^{\delta_i} = \prod^J_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right)= \prod^{J_i}_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right).$
+
+$J_i$ is the interval for which $t_i \in I_{J_i}=(a_{J_i-1},a_{J_i}]$, so
+$$\int_0^{t_i} h(s|\bfx_i) ds
+  = \sum^{J_i}_{j=1} t_{ij}\exp\left(\eta_{ij}\right) =  \sum^{J_i}_{j=1} \exp\left(o_{ij} + \eta_{ij}\right).$$
+We can now rewrite the likelihood as:
+$$L(\bsbeta,\bsbeta_0) = \prod_{i=1}^n h(t_i|\bfx_i)^{\delta_i} \exp
+    \left(
+      -\int_0^{t_i} h(s|\bfx_i) ds
+    \right) = \prod_{i=1}^n \prod_{j=1}^{J_i}
+  \exp \left( \delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
+with log-likelihood
+$$l(\bsbeta,\bsbeta_0) = \log L(\bsbeta,\bsbeta_0) = \sum_{i=1}^n \sum_{j=1}^{J_i} \left(\delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
+
+---
+# PEM Likelihood (3)
+
+$$\text{Log-likelihood: }l(\bsbeta,\bsbeta_0) = \log L(\bsbeta,\bsbeta_0) = \sum_{i=1}^n \sum_{j=1}^{J_i} \left(\delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
+
+Now assume $\delta_{ij} \stackrel{iid}{\sim} Po(\mu_{ij})$, with $\mu_{ij} = h_{ij}t_{ij}$ and density $f(\delta_{ij}) = \tfrac{\mu_{ij}^{\delta_{ij}}}{\delta_{ij}!} \exp(-\mu_{ij})$
+
+$$\begin{align*}
+l_{Po}(\bsbeta,\bsbeta_0)
+  &= \log\left(\prod_{i=1}^n\prod_{j=1}^{J_i}f(\delta_{ij})\right)=\sum_{i=1}^n\sum_{j=1}^{J_i}(\delta_{ij}\log(\mu_{ij}) - \mu_{ij})\\
+  &= \sumn\sum_{j=1}^{J_i}(\delta_{ij}\log(h_{ij})+\delta_{ij}\log(t_{ij}) - h_{ij}t_{ij})\\
+  & = \sumn\sum_{j=1}^{J_i}(\delta_{ij}\eta_{ij} - \exp(o_{ij} + \eta_{ij}) + \delta_{ij}o_{ij})
+\end{align*}$$
+
+$$\Rightarrow l_{Po}(\bsbeta, \bsbeta_0) \propto l(\bsbeta, \bsbeta_0)$$
+
+$\ra$ We can **fit a Poisson model to the pseudo-data** to obtain ML estimates of $\bsbeta$ `r Citep(bib, c("holford_analysis_1980", "laird_covariance_1981", "friedman_piecewise_1982"))`
+
+
+---
+# PEM: Properties
+
+**Trade-off**:
+  - small $J$:
+    + crude approximation of the baseline hazard
+    + low computational cost
+    + stable
+  - large $J$:
+    + more flexible approximation
+    + high computational cost
+    + unstable
+
+In general
+  - Number of baseline parameters to estimate equal to $J$
+  - Number and placement of cut points $a_j, j=1,\ldots,J$ important for fit
+  - If no ties in the data and cut points equal event times, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
+
+
+---
+# PEM: Illustration
+
+```{r, est-pem, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
+ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
+pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
+pem_haz_df2 <- int_info(ped2) %>%
+  mutate(offset = intlen) %>%
+  mutate(
+    hazard = predict(object=pem2, ., type="response"),
+    survival = exp(-cumsum(hazard * intlen)))
+p_pem_haz2 <- p_pem_haz %+% pem_haz_df2 + ylim(c(0, .35))
+```
+
+```{r, echo=FALSE, fig.width = 6, fig.height = 3, dependson=c("sim-wb", "ex-pem-1"), out.width = "800px"}
+pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM: large J")
+```
+
+--
+
+**Solution**:
+- use large $J$ and penalize differences between neighboring baseline hazards $\beta_{0j}, \beta_{0(j\pm1)}$ and/or
+
+- reduce parameter count by *basis function representation* of $h_0(t)$.
+
+
+
+---
+# PEM: Penalized Likelihood
+
+**Penalization:**
+
+Impose a penalty on the step heights $$\operatorname{pen}(\bsbeta_0) = \sum_{j=2}^J (\beta_{0j} - \beta_{0j-1})^2,$$
+this leads to the penalized estimator
+$$(\widehat{\bsbeta}, \widehat{\bsbeta}_0) = \underset{\bsbeta,\bsbeta_0}{\mbox{argmax}} \ l_{pen}(\bsbeta,\bsbeta_0)$$
+with
+$$l_{pen}(\bsbeta,\bsbeta_0) = l(\bsbeta,\bsbeta_0) - \tau \ \operatorname{pen}(\bsbeta_0)$$ and
+penalty/smoothing parameter $\tau$.
+
+---
+# PEM: Penalized Likelihood (2)
+
+For
+- $\tau \longrightarrow 0$ we obtain an unpenalized fit
+- $\tau \longrightarrow \infty$ we obtain $g_0(t)=\text{const}$
+
+$\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
+
+$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy / implementation for (penalized) GLMs or GAMMs:
+**`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**.
+
+**PEM-representation means we can re-use *any* algorithm that handles Poisson data with offsets for complex time-to-event problems `r Citep(bib, "bender.generalMl.2021", after = "; e.g. XGboost etc.")`.**
+
+---
+# PEM: Penalized Likelihood & Basis Representation
+
+**Basis Representation:**
+
+- Piecewise-constant log-baseline hazard rate can also be parameterized in terms of a spline basis, where $$g_0(t) = \sum_{\ell=1}^L \gamma_\ell B_\ell(t_j)$$
+with $t_j = a_j\ \forall\, t \in I_j$, $L \ll J$, and typically a first order differences penalty on $\bsgamma$.
+
+- *PEMs with general additive predictor:*
+Since we're fitting a Poisson-Likelihood, this can *easily* be extended by including spatial, non-linear, random or time-varying effects, e.g.
+$$h(t|\bfx_i,\bfz_i) = \exp(g_0(t) + f_1(z_{i1}) + \ldots + f_q(z_{iq}, t) +f_r(t)z_{ir} +  \bfx_i^\top\bsbeta).$$
+
+$\ra$ In analogy to Piecewise Exponential Models (PEMs), estimated via GLMs, we refer to this model class as Piecewise-exponential Additive Mixed Model `r Citep(bib, "bender_generalized_2018", before = "PAMM; ")`, estimated via GAMMs
+
+
+---
+# Modelling Time-Varying Effects: Idea
+
+Main idea:
+Define *artificial time-dependent covariates* and fit the model with these time-dependent covariates to represent time-varying effects (TVEs).
+
+Specifically:
+$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)\ ,$$ with basis functions
+depending on t:
+$$h(t |x_i)= h_0(t)\exp\bigg(x_i \sum_\ell \gamma_\ell B_\ell(t)\bigg)=h_0(t)\exp\bigg(\sum_\ell \gamma_\ell (x_i B_\ell(t))\bigg).$$
+$\implies$ coefficients $\gamma_\ell$ for time-dependent covariates $x B_\ell(t)$ can be estimated as usual
+
+---
+# Modelling Time-Varying Effects (1)
+
+Examples:
+
+- $L=1, B_1(t) \equiv 1$: time-constant effect
+- $L=1, B_1(t) = \log(1 + t)$: logarithmic increase/decrease over time
+
+Much more flexible & fairly assumption-free:
+- Use $L \gg 1$
+- Use spline basis functions for $B_\ell(t)$
+- Penalize $\gamma_\ell$
+
+---
+# Modelling Time-Varying Effects (2)
+
+$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)$$
+
+- **Very** easy to include in PAMMs since we already include time $t$ as a covariate for the baseline hazard
+- Time-varying linear effects $x\beta(t)$ simply specified as spline interaction effect `s(<TIME>, by = <X>)`
+- Non-linear time-varying effects $f(x, t)$ specified as tensor product splines `te(<TIME>, <X>)`
+
+Technical point:
+- PAMMs assume piece-wise constant hazard rates, so $\beta(t)$ actually modelled as a *step function* that only changes at cutpoints $a_j$:
+$\beta(t) \equiv \sum^L_{\ell=1} \gamma_\ell B_\ell(a_{j})\; \forall\, t \in (a_{j-1}, a_j]$
+-  for data created with `as_ped`, `tend` is $a_j$:  use `s(tend, by = <X>)`
+
+
+---
+# Time-Dependent Covariates (TDCs)
+
+If a covariate $x$ changes over time $t$, the hazard rate becomes
+$$h(t | x_i(t))=h_0(t)\exp(x_i(t)\beta).$$
+
+
+Note that the resulting model **does not have proportional hazards**, since
+$$\frac{h(t | x_j(t))}{h(t | x_{k}(t))}=\exp((x_j(t)-x_k(t))\beta)$$
+depends on $t$.
+
+---
+# Example: Primary Biliary Cirrhosis (4)
+
+.pull-left[
+
+`pbcseq`:
+
+```{r pbc-2b, echo = FALSE}
+head(pbc_seq) |> knitr::kable()
+```
+
+]
+
+.pull-right[
+
+`pbc_ped[49:54, ]` via `pammtools::as_ped`:
+
+```{r pbc-4, echo = FALSE}
+pbc_ped |>
+  select(-interval, -tstart, -offset, -trt, -sex) |>
+  slice(49:54) |>
+  knitr::kable(row.names = FALSE)
+```
+
+]
+
+---
+# Instantaneous and delayed effects of TDCs
+
+Default is *concurrent* or instantaneous effect:
+
+- covariate value $x_i(t)$ observed at $t = a_j$ affects the
+hazard immediately starting from interval $(a_j, a_{j+1}]$, until the next recorded change in $x$ or the end of follow-up
+
+*Lagged* effects:
+
+- use  `lag` argument in `concurrent` to specify time-delayed effect of $x_i(t)$
+- covariate value $x_i(t)$ observed at $t = a_j$ affects the
+hazard starting from later interval $(a_j + \texttt{lag}, \ldots]$ until the next (lagged) change in $x$ or end of follow-up
+
+
+```{r echo = TRUE, eval = FALSE}
+as_ped(
+  data = list(pbc_clean, pbc_seq), #!!
+  id = "id",  #!!
+  formula = Surv(time, status) ~ . + concurrent(log_bili, log_protime, tz_var = "day", lag = 1) #!!
+)
+```
+
+
+---
+# Extended Cox analysis of the `pbc` data
+```{r pbc-cox1, echo = TRUE}
+# code adapted from vignette("timedep", package="survival")
+temp <- subset(pbc_clean, select = c(id:sex)) # baseline
+pbc2 <- survival::tmerge(temp, temp, id = id, death = event(time, status)) #set range
+pbc2 <- survival::tmerge(pbc2, pbc_seq, id = id, log_bili = tdc(day, log_bili),
+                         log_protime = tdc(day, log_protime))
+```
+.pull-left[
+Use baseline measurements only:
+```{r pbc-cox2, echo = TRUE}
+pbc_cox_base <- coxph(Surv(time, status == 2) ~
+                log(bili) + log(protime),
+              data = subset(pbc, id <= 312))
+cbind(coef(pbc_cox_base), confint(pbc_cox_base)) |> exp() |> kable()
+```
+]
+.pull-right[
+Use all measurements:
+```{r pbc-cox3, echo = TRUE}
+pbc_cox_tdc <- coxph(Surv(tstart, tstop, death == 1) ~
+                log_bili + log_protime,
+              data = pbc2)
+cbind(coef(pbc_cox_tdc), confint(pbc_cox_tdc)) |> exp() |> kable()
+```
+]
+.center[
+$\implies$ substantial differences
+]
+
+---
+
+# Time-Varying Effects
+
+The effect of a covariate $x$ can change as time progresses
+
+Examples:
+
+- effect of patients' status at admission to the hospital vanishes over time,
+- whether a tool is made with cheap or high-quality materials begins to affect its risk of failure only after it has been used for a certain amount of time.
+
+**Model for one covariate**
+$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
+
+Note that the proportional hazard assumption is no longer fulfilled since
+$$\frac{h(t | x)}{h(t | x + 1)} = \exp(\beta(t)):$$
+$\implies$ The hazard ratio becomes a function of time.
+
+---
+# Example: Flexible time-varying effects
+
+Specify the effect of `karno` as
+$f(x_{\text{karno}},t) = f(t)\cdot x_{\text{karno}}$, where $f(t)$
+is estimated from the data:
+```{r vet-pam-tve, echo =TRUE}
+# no need for separate time-constant effect for karno here:
+vet_pam_tve <- pamm(
+  ped_status ~ s(tend) + trt + prior + s(tend, by = karno),
+  data = veteran_ped)
+AIC(vet_pam_logt, vet_pam_tve)
+```
+$\implies$ assumed shape "good enough" in this case
+
+---
+# Example: Flexible time-varying effects (2)
+```{r gg_tv_karno, echo =TRUE, fig.height = 3, fig.width = 5, out.height= "300px"}
+term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
+  mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
+  mutate(cox.fit = coef(vet_cox_logt)["karno"] + coef(vet_cox_logt)["tt(karno)"] * log(tend + 20),
+    pam.fit = coef(vet_pam_logt)["karno"] + coef(vet_pam_logt)["karno:logt20"] * log(tend + 20))
+ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
+    geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+    geom_line(aes(y = cox.fit, col = "Cox log(t)")) + geom_step(aes(y = pam.fit, col = "PAM log(t)")) +
+    scale_color_manual(name = "Model: ", values = c(Set1[1:2], "black")) +
+    xlab("t") + ylab(expression(hat(beta)(t)))
+```
+
+
+---
+# Testing for Proportional Hazards / Time-Varying Effects
+
+We can test the proportional hazards assumption with regard to specific covariates by checking for statistically significant time-varying effects:
+
+$$h(t|x)=h_0(t) \exp(\beta_1 x+ \beta_2(t) x)$$ with $\beta_2(t) = \sum_\ell B_\ell(t)\gamma_\ell$
+
+Check for $\beta_2(t) \equiv 0$ with $H_0: \gamma_\ell = 0 \,\forall\, \ell$
+
+---
+# Example: Testing for Proportional Hazards (1)
+
+Simple z-Test for time-varying effect `karno:logt20`:
+```{r, echo = TRUE, output.lines = c(1:14)}
+summary(vet_pam_logt)
+```
+
+---
+# Example: Testing for Proportional Hazards (2)
+Likelihood ratio test for smooth time-varying effect vs time-constant effect:
+```{r, echo = TRUE}
+vet_pam_const <- update(vet_pam_tve, .~. - s(tend, by = karno) + karno)
+anova(vet_pam_tve, vet_pam_const, test = "Chisq")
+```
+
+---
+# Example: Testing for Proportional Hazards (3)
+Careful:
+p-values of smooth terms in `summary.gam` are for $H_0:  f(x, t) \equiv 0$, not $H_0:  f(x, t) \equiv x \beta_1$:
+```{r, echo = TRUE, output.lines = c(1:6, 15:20)}
+summary(vet_pam_tve)
+```
+
+
+
+---
+class: inverse, middle, center
+
+.font120[
+**Left truncation**
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+
+---
+# Left Truncation
+
+Only individuals that experienced an event *after* $y_i$ are observed, i.e., $t_i \geq y_i$.
+
+Likelihood contribution:
+$$L_i(\bstheta) = P(T=t_i | T \geq y_i| \bstheta) = \frac{f(t_i| \bstheta)}{S(y_i| \bstheta)}$$
+
+For (non-parametric) hazard based methods: <br>
+We can deal with left truncation, by only including subject in the risk after their left-truncation time
+
+**Example: Infant Mortality** (1821–1894):
+- Infants were included in the study when their mother died (left truncation event)
+- Two infants of same age whose mothers were still alive were matched into the study
+- All infants still alive were censored at the end of the study (365 days)
+- Infants that die before their mother never enter the study
+- Hypothesis: infants whose mothers are still alive survive longer
+
+
+---
+# Example: Infant Mortality
+
+
+```{r, echo = TRUE}
+data("infants", package = "eha")
+infants$id <- seq_len(nrow(infants))
+head(infants)
+xtabs(~event + mother, data = infants)
+summary(infants$enter)
+summary(infants$exit)
+```
+
+
+---
+# Example: Infant Mortality (2)
+
+```{r, echo = TRUE}
+infants[1, c("id", "enter", "exit", "event", "mother", "age"), ]
+ped_infants <- infants |> as_ped(Surv(exit, event) ~ .)
+ped_infants |> filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age) |> slice(1, n())
+ped_infants_lt <- infants |> as_ped(Surv(enter, exit, event) ~ .)
+ped_infants_lt |>filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age)  |> slice(1, n())
+```
+
+---
+# Example: Infant Mortality (3)
+
+"Naive" analysis ignoring left-truncation:
+
+```{r echo = TRUE, output.lines = c(8:14, 18:20)}
+pam_infants <- pamm(
+  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
+  data = ped_infants)
+summary(pam_infants) # truncated output
+```
+
+```{r echo = TRUE}
+exp(coef(pam_infants)[2])
+```
+
+---
+# Example: Infant Mortality (4)
+Analysis that takes into account left-truncation:
+
+.font90[
+```{r echo = TRUE, output.lines = c(8:14, 18:20)}
+pam_infants_lt <- pamm(
+  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
+  data = ped_infants_lt)
+summary(pam_infants_lt) # truncated output
+```
+]
+
+```{r echo = TRUE}
+exp(coef(pam_infants_lt)[2])
+```
+
+
+---
+# Latent Failure Time Approach
+
+Consider two event types $E \in \{1, 2\}$
+
+$$T = \min(T_1,T_2)$$
+$$E = 1 \iff T_1 < T_2$$
+
+- event type $E$ with associated event time $T_E$
+
+- Only $(T, E)$ observable, joint distribution of $(T_1, T_2)$ is not identifiable
+
+- assuming independence between $T_1$ and $T_2$ makes it identifiable (but checking the assumption is not possible using the observed data)
+
+- interpretation of joint distribution rarely interesting
+
+- in general, we prefer the **cause-specific hazard** model
+
+---
+# Cause-Specific Hazards
+
+We define $T$ as the time to any event $E \in \{1,\ldots,K\}$.
+
+The cause-specific hazards are
+$$h_e(t) = \lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t, E = e\ |\ T \geq t)}{\Delta t}, \; e = 1, \dots, K.$$
+
+From the cause specific hazards, we can derive the **cumulative incidence function (CIF)** (gives the probability of experiencing event $E = e$ before time $t$)
+$$F_e(t) = P(T \leq t, E = e) = \int_0^t h_e(u) S(u)\ du,$$
+
+using:
+- cause specific cumulative hazard: $H_e(t) = \int^t_0 h_e(s)ds$
+- all cause hazard: $h(t) = \sum_{e=1}^{K} h_e(t)$
+- all cause cumulative hazard: $H(t) = \sum_{e=1}^{K} H_e(t)$
+- all cause survival probability: $S(t) = \exp(-H(t))$
+
+
+
+---
+# Estimation
+The distribution of the observed data is estimated by fitting cause-specific hazards models
+$$h_e(t|\bfx_i) = h_{0e}(t) \exp(\bfx_i^\top \bsbeta_e)$$
+
+To do so, we define two new status variables, such that
+
+.pull-left[
+.center[
+data set
+
+$$\begin{array}{llll}
+T\quad & E\quad & \delta\quad & x\\ \hline
+3 & 1 & 1 & x_1\\
+4 & 2 & 1 & x_2\\
+2 & 0 & 0 & x_3\\
+\end{array}$$
+]
+]
+
+.pull-right[
+.center[
+becomes
+
+$$\begin{array}{llllll}
+T & E & \delta & x & \delta_1 & \delta_2 \\ \hline
+3 & 1 & 1 & x_1 & 1 & 0\\
+4 & 2 & 1 & x_2 & 0 & 1\\
+2 & 0 & 0 & x_3 & 0 & 0\\
+\end{array}$$
+]
+]
+
+
+where the cause-specific hazard estimates use hazard rate models with
+event indicator $\delta_1$ for $e = 1$ and event indicator $\delta_2$ for $e = 2$.
+
+
+---
+# Estimation
+The distribution of the observed data is estimated by fitting cause-specific hazards models
+$$h_{k ,e}(t|\bfx_i) = h_{k ,e}(t) \exp(\bfx_i^\top \bsbeta_{k \rightarrow e})$$
+
+To do so, we define two new status variables, such that
+
+.pull-left[
+.center[
+data set
+
+$$\begin{array}{llll}
+T\quad & E\quad & \delta\quad & x\\ \hline
+3 & 1 & 1 & x_1\\
+4 & 2 & 1 & x_1\\
+2 & 0 & 0 & x_2\\
+\end{array}$$
+]
+]
+
+.pull-right[
+.center[
+becomes
+
+$$\begin{array}{llllll}
+T & E & \delta & x & \text{from} & \text{to} \\ \hline
+3 & 1 & 1 & x_1 & 0 & 1\\
+4 & 2 & 1 & x_1 & 1 & 2\\
+2 & 0 & 0 & x_2 & 0 & 0\\
+\end{array}$$
+]
+]
+
+
+where the cause-specific hazard estimates use hazard rate models with
+transition indicators $\text{from}$ and $\text{to}$ for event $0 \rightarrow 1$, $0 \rightarrow 2$, $1 \rightarrow 2$.
+
+
+---
+# Cause-Specific Hazards and Transition Probabilities
+
+We define $T$ as the time to any event $E \in \{k \rightarrow e: k, e = 1,\ldots,K\}$.
+
+The cause-specific hazards are
+$$h_{k ,e}(t) = \lim_{\Delta t \to 0} \frac{P(t \leq T \leq t + \Delta t, E = {k ,e}\ |\ T \geq t)}{\Delta t}, \; k, e = 1, \dots, K.$$
+
+From the cause specific hazards, we can derive the **transition probability matrix** (element $(k,e)$ gives the probability of transitioning from $k$ into $e$ before time $t$)
+$$ P(t) = \prod_{\tau \in \mathcal{T_t}} \left(\textbf{I} + d\textbf{H}(\tau)\right)$$
+
+using:
+- cause specific cumulative hazard: $H_{k ,e}(t) = \int^t_0 h_{k ,e}(s)ds$ 
+- increment of cause specific cumulative hazard $dH_{k ,e}(t) = H_{k ,e}(t) - H_{k ,e}(t-)$, where $H_{k ,e}(t-)$ denotes the cumulative hazard just before time $t$
+- diagonal elements of $dH_{k ,e}(t)$ are constructed s.t. rows of transition probability matrix sum up to $1$.
+
+
+---
+# Cause-Specific Hazards and Transition Probabilities (2)
+Mini Example: 
+- Consider classical illness-death-model, i.e. possible transitions $0 \rightarrow 1$, $0\rightarrow 2$, $1 \rightarrow 2$ 
+- Assume discrete event times $\mathcal{T} = \mathbb{Z}$, i.e. $\mathcal{T}_t = \{\tau \in \mathbb{Z}: \tau < t\}$. 
+- Assume time-independent hazards, i.e. $h(t) = h(s), \forall t, s \in \mathcal{T}$
+
+Then the transition probability matrix at time $t = 1$ can be written as
+$$\left(\begin{array}{ccc} 
+  1-H_{0 ,1}-H_{0 ,2} & H_{0 ,1} & H_{0 ,2} \\
+  0 & 1-H_{1 ,2} & H_{1 ,2} \\
+  0 & 0 & 1
+\end{array}\right)$$
+The transition probability matrix at time $t = 2$ can be written as
+$$\left(\begin{array}{ccc} 
+  1-H_{0 ,1}-H_{0 ,2} & H_{0 ,1} & H_{0 ,2} \\
+  0 & 1-H_{1 ,2} & H_{1 ,2} \\
+  0 & 0 & 1
+\end{array}\right)$$
+
+
+
+---
+# Exposure-Lag-Response Associations
+
+**Inputs**:
+- **Time of exposure** $t_z$: Time at which TDCs are observed
+- **Exposure value** $z(t_z)$: The value of the TDC at exposure time $t_z$
+- **Time-to-event** $t$: Follow-up time
+
+--
+
+**A general Exposure-Lag-Response Association (ELRA)** can be defined as
+
+$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t, t_z, z(t_z))\mathrm{d}t_z$$
+
+
+**Components**:
+
+- **Partial effects $h(t,t_z,z(t_z))$**: The effect of the TDC recorded at
+exposure time $t_z$ with value $z(t_z)$ on the hazard at follow up time $t$
+
+--
+
+- **Lag-lead window/Integration borders** $\mathcal{T}$: Defines the integration limits.<br>
+Minimal requirement $\mathcal{T}(t) = \{t_{z}:t_{z}\leq t\}$
+
+
+---
+# Exposure-Lag-Response Associations (3)
+
+**A general Exposure-Lag-Response Association (ELRA)** can be defined as
+
+$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t, t_z, z(t_z))\mathrm{d}t_z$$
+
+
+Special cases:
+
+- Weighted cumulative exposure (WCE; `r Citet(bib, "Sylvestre2009")`):
+
+$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t-t_z) z(t_z)\drm t_z$$
+
+- Distributed-lag non-linear model (DLNM; `r Citet(bib, "Gasparrini2014", "Gasparrini2017",
+max.names = 1)`):
+
+
+$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t-t_z, z(t_z))\drm t_z$$
+
+
+---
+# Exposure-Lag-Response Associations (4)
+
+All of these can again be conveniently estimated using PAMMs/GAMMs with appropriate (very complex) data pre-processing abstracted away by **`pammtools`** (see `r Citet(bib, "bender_pammtools_2018")`)
+
+.center[
+
+<img src="figures/elra-code.png"></img>
+
+]
+
+---
+# Back to Statistical Modeling
+
+`r Citet(bib, "rappl.spatial.2023a")`
+
+.center[
+
+<img src="figures/rappl-joint-model.png" width="550px"></img>
+
+]
+

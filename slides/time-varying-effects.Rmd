@@ -14,55 +14,20 @@ class: inverse, middle, center
 </html>
 
 
----
 
-# Time-Varying Effects
-
-The effect of a covariate $x$ can change as time progresses
-
-Examples:
-
-- effect of patients' status at admission to the hospital vanishes over time,
-- whether a tool is made with cheap or high-quality materials begins to affect its risk of failure only after it has been used for a certain amount of time.
-
-**Model for one covariate**
-$$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
-
-Note that the proportional hazard assumption is no longer fulfilled since
-$$\frac{h(t | x)}{h(t | x + 1)} = \exp(\beta(t)):$$
-$\implies$ The hazard ratio becomes a function of time.
 
 ---
-# Modelling Time-Varying Effects: Idea
+# Modelling Time-Varying Effects: Easily modelled with PAMMs
 
-Main idea:
+**Setting**: 
+The effect of a covariate $x$ can change as time progresses, e.g. effect of patients' status at admission to the hospital vanishes over time,
+
+**Main idea**:
 Define *artificial time-dependent covariates* and fit the model with these time-dependent covariates to represent time-varying effects (TVEs).
-
-Specifically:
-$$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)\ ,$$ with basis functions
-depending on t:
-$$h(t |x_i)= h_0(t)\exp\bigg(x_i \sum_\ell \gamma_\ell B_\ell(t)\bigg)=h_0(t)\exp\bigg(\sum_\ell \gamma_\ell (x_i B_\ell(t))\bigg).$$
-$\implies$ coefficients $\gamma_\ell$ for time-dependent covariates $x B_\ell(t)$ can be estimated as usual
-
----
-# Modelling Time-Varying Effects (1)
-
-Examples:
-
-- $L=1, B_1(t) \equiv 1$: time-constant effect
-- $L=1, B_1(t) = \log(1 + t)$: logarithmic increase/decrease over time
-
-Much more flexible & fairly assumption-free:
-- Use $L \gg 1$
-- Use spline basis functions for $B_\ell(t)$
-- Penalize $\gamma_\ell$
-
----
-# Modelling Time-Varying Effects (2)
 
 $$\beta(t)=\sum^L_{\ell=1} \gamma_\ell B_\ell(t)$$
 
-- **Very** easy to include in PAMMs since we already include time $t$ as a covariate for the baseline hazard
+- **In PAMMs**, very easy to include since we already include time $t$ as a covariate for the baseline hazard
 - Time-varying linear effects $x\beta(t)$ simply specified as spline interaction effect `s(<TIME>, by = <X>)`
 - Non-linear time-varying effects $f(x, t)$ specified as tensor product splines `te(<TIME>, <X>)`
 
@@ -75,13 +40,14 @@ $\beta(t) \equiv \sum^L_{\ell=1} \gamma_\ell B_\ell(a_{j})\; \forall\, t \in (a_
 # Example: Veterans' Administration Lung Cancer study
 
 Randomised trial of survival times under two treatment regimens for lung cancer:
+- endpoint: `status` (censoring = 0)
+- variables of interest:  `karno` Karnovsky performance score (consider as TVE), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
 ```{r vet-load, echo = TRUE}
 veteran <- survival::veteran  |> filter(time < 400)  |> #reduce data for ex
   mutate(trt   = 1L * (trt == 2),
          prior = 1L * (prior == 10))
-str(veteran)
+rbind(head(survival::veteran, n = 2), tail(survival::veteran, n = 2))[, c(1:5, 8)] |> knitr::kable()
 ```
-We consider TVEs of Karnofsky performance scores at randomisation (`karno`).
 
 ---
 # Example: Fixed shape for time-variation (1)
@@ -129,36 +95,6 @@ cbind(
 ]
 
 ---
-# Example: Flexible time-varying effects
-
-Specify the effect of `karno` as
-$f(x_{\text{karno}},t) = f(t)\cdot x_{\text{karno}}$, where $f(t)$
-is estimated from the data:
-```{r vet-pam-tve, echo =TRUE}
-# no need for separate time-constant effect for karno here:
-vet_pam_tve <- pamm(
-  ped_status ~ s(tend) + trt + prior + s(tend, by = karno),
-  data = veteran_ped)
-AIC(vet_pam_logt, vet_pam_tve)
-```
-$\implies$ assumed shape "good enough" in this case
-
----
-# Example: Flexible time-varying effects (2)
-```{r gg_tv_karno, echo =TRUE, fig.height = 3, fig.width = 5, out.height= "300px"}
-term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
-  mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
-  mutate(cox.fit = coef(vet_cox_logt)["karno"] + coef(vet_cox_logt)["tt(karno)"] * log(tend + 20),
-    pam.fit = coef(vet_pam_logt)["karno"] + coef(vet_pam_logt)["karno:logt20"] * log(tend + 20))
-ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
-    geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
-    geom_line(aes(y = cox.fit, col = "Cox log(t)")) + geom_step(aes(y = pam.fit, col = "PAM log(t)")) +
-    scale_color_manual(name = "Model: ", values = c(Set1[1:2], "black")) +
-    xlab("t") + ylab(expression(hat(beta)(t)))
-```
-
-
----
 # Stratification: Time-varying Effects of Factors
 
 $$h(t | x_i)= h_0(t)\exp(x_i\beta(t))$$
@@ -199,35 +135,3 @@ ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype))
     ylab(expression(hat(H)(t))) + xlab("t") + coord_cartesian(ylim = c(0, 10))
 ```
 
----
-# Testing for Proportional Hazards / Time-Varying Effects
-
-We can test the proportional hazards assumption with regard to specific covariates by checking for statistically significant time-varying effects:
-
-$$h(t|x)=h_0(t) \exp(\beta_1 x+ \beta_2(t) x)$$ with $\beta_2(t) = \sum_\ell B_\ell(t)\gamma_\ell$
-
-Check for $\beta_2(t) \equiv 0$ with $H_0: \gamma_\ell = 0 \,\forall\, \ell$
-
----
-# Example: Testing for Proportional Hazards (1)
-
-Simple z-Test for time-varying effect `karno:logt20`:
-```{r, echo = TRUE, output.lines = c(1:14)}
-summary(vet_pam_logt)
-```
-
----
-# Example: Testing for Proportional Hazards (2)
-Likelihod ratio test for smooth time-varying effect vs time-constant effect:
-```{r, echo = TRUE}
-vet_pam_const <- update(vet_pam_tve, .~. - s(tend, by = karno) + karno)
-anova(vet_pam_tve, vet_pam_const, test = "Chisq")
-```
-
----
-# Example: Testing for Proportional Hazards (3)
-Careful:
-p-values of smooth terms in `summary.gam` are for $H_0:  f(x, t) \equiv 0$, not $H_0:  f(x, t) \equiv x \beta_1$:
-```{r, echo = TRUE, output.lines = c(1:6, 15:20)}
-summary(vet_pam_tve)
-```

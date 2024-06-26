@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font150[
-**Part V: Extensions and Outlook**
+**Part V: Summary, Extensions, and Outlook**
 ]
 ]
 
@@ -13,7 +13,16 @@ class: inverse, middle, center
   <hr color='#005500' size=2px width=900px>
 </html>
 
+---
+# `pbc`, `veterans`, `sir.adm`, `prothr`... what's the point?
 
+Summarizing, after many examples, we have seen that `pammtools`...
+- ...can deal with time-dependent covariates
+- ...can deal with time-varying effects
+- ...can deal with left truncation
+- ...can combine the above flexibility and can deal with event-history data, especially multi-state settings with recurrent events.
+
+However, that is not all... Many more examples can be found here [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/)
 
 ---
 # Exposure-Lag-Response Associations
@@ -32,66 +41,6 @@ We refer to these types of effects as *E*xposure-*L*ag *R*esponse *A*ssociations
 </a>
 
 ]
-
-
----
-# Exposure-Lag-Response Associations
-
-**Inputs**:
-- **Time of exposure** $t_z$: Time at which TDCs are observed
-- **Exposure value** $z(t_z)$: The value of the TDC at exposure time $t_z$
-- **Time-to-event** $t$: Follow-up time
-
---
-
-**A general Exposure-Lag-Response Association (ELRA)** can be defined as
-
-$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t, t_z, z(t_z))\mathrm{d}t_z$$
-
-
-**Components**:
-
-- **Partial effects $h(t,t_z,z(t_z))$**: The effect of the TDC recorded at
-exposure time $t_z$ with value $z(t_z)$ on the hazard at follow up time $t$
-
---
-
-- **Lag-lead window/Integration borders** $\mathcal{T}$: Defines the integration limits.<br>
-Minimal requirement $\mathcal{T}(t) = \{t_{z}:t_{z}\leq t\}$
-
-
----
-# Exposure-Lag-Response Associations (3)
-
-**A general Exposure-Lag-Response Association (ELRA)** can be defined as
-
-$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t, t_z, z(t_z))\mathrm{d}t_z$$
-
-
-Special cases:
-
-- Weighted cumulative exposure (WCE; `r Citet(bib, "Sylvestre2009")`):
-
-$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t-t_z) z(t_z)\drm t_z$$
-
-- Distributed-lag non-linear model (DLNM; `r Citet(bib, "Gasparrini2014", "Gasparrini2017",
-max.names = 1)`):
-
-
-$$g(\mathbf{z}, t) = \int_{\mathcal{T}(t)} h(t-t_z, z(t_z))\drm t_z$$
-
-
----
-# Exposure-Lag-Response Associations (4)
-
-All of these can again be conveniently estimated using PAMMs/GAMMs with appropriate (very complex) data pre-processing abstracted away by **`pammtools`** (see `r Citet(bib, "bender_pammtools_2018")`)
-
-.center[
-
-<img src="figures/elra-code.png"></img>
-
-]
-
 
 ---
 # Beyond (mgcv) GAMMs
@@ -150,23 +99,9 @@ Allows to specify standard survival model depending on tabular features (with st
 
 
 ---
-# Back to Statistical Modeling
-
-`r Citet(bib, "rappl.spatial.2023a")`
-
-.center[
-
-<img src="figures/rappl-joint-model.png" width="550px"></img>
-
-]
-
-
----
 # The Future of PAMMs/pammtools
 
-- currently working of refactoring data-transformation in order to support data transformation for multi-state modeling
-  + some open bugs + PRs
-  + more complex settings, e.g. CR or recurrent events with cumulative effects not well tested
+- currently working on further functionalities in the multi-state setting, like confidence intervals for transition probabilities
 
 - in the future: refactor backend for more seemless integration of other GAMM software (**`brms`**, **`mboost`**, etc. )
 

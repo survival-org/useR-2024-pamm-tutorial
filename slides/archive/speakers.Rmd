@@ -1,21 +1,25 @@
 
 ---
-# Johannes Piller
+# Fabian Scheipl
 
 .pull-left[
   LMU Munich & <br>
   Munich Center for Machine Learning (MCML)
 
-  Github: [`johannespiller`](https://github.com/johannespiller)
+  Github: [`fabian-s`](https://github.com/fabian-s?tab=repositories)
 
-  - M.Sc Mathematics @ TU Munich (2020)
-  - Asistant Manager @ KPMG (2020-2023)
-  - nowadays: Doctoral Candidate @ LMU Munich, Multi-State Survival Analysis,
-    Statistical Consulting  
+  - PhD @ LMU Munich (2008-2011)
+    Bayesian Variable Selection for GAMMs: **`spikeSlabGAM`**
+    GAMM methodology: **`gamm4`**
+  - PostDoc @ LMU Munich (2012-2017)
+   GAMMs etc. for functional data: **`refund`**, **`FDboost`**, **`tidyfun`**, **`registr`**
+   PAMMs et al.:  **`pammtools`**, **`dlnm`**
+  - nowadays: mostly teaching and computational reproducibility,
+    unsupervised methods for functional data
 ]
 
 .pull-right[
-![](figures/jp.jpg)
+![](figures/fs.jpg)
 ]
 
 

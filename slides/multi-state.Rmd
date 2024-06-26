@@ -1,0 +1,162 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font120[
+**Multi-State Models**
+]
+]
+
+<html>
+  <div style=---float:left></div>
+  <hr color='#005500' size=1px width=900pxpx>
+</html>
+
+
+---
+# Event History Analysis: Multi-State Setting
+
+.center[
+<img src="figures/event-history-analysis.svg", width="700px">
+]
+
+- we are interested in the occurences of multiple, mutually exclusive events with in-between- and back-transitions, e.g. patients can transition between increasing severities of illnesses or recover permanently.
+- transient state $0$
+- *absorbing* state $3$
+
+
+---
+# Cause-Specific PAMMs
+
+- data transformation as usual with `as_ped` / `as_ped_multistate`:
+  + automatically recognizes if status variable has more than two unique values
+  + automatically recognizes if id variable occurs multiple times in the data set
+  + creates one data set per non-censoring event or stack them with an additional column `transition`
+
+- fit cause-specific PAMMs jointly w/ interactions of `transition` variable with other predictors, including time, and shared effects for others
+$$h_{k,e}(t|\bfx) = \exp(g(t, k, e, \bfx))$$
+
+- transition probability depends on all competing events and current state at time $t$
+- however, transition probabilities are easy to calculate from the cumulative hazards
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+- 488 liver cirrhosis patients
+- endpoints: `status` = 0/1 for censoring, event
+- events of interest: `status` = 1 and `to` = 2/3 for abnormal prothrombin level, death
+- variable of interest  `treat`: A patient's treatment (Placebo, Prednisone)
+
+```{r, echo = TRUE}
+data(prothr, package = "mstate")
+prothr |> filter(id == 46) |> knitr::kable() # example patients
+```
+
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+```{r, echo = FALSE}
+prothr <- prothr %>% 
+  rename(tstart = Tstart, tstop = Tstop) %>%
+  filter(tstart != tstop)
+```
+
+First, use `add_counterfactual_transitions` to add all possible transitions at each point in time:
+```{r lib-ms-pammtools, echo = FALSE}
+# load function as it is not yet included in the package
+devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
+source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/tmp/add_transition_probabilities.R")
+library(tidyverse)
+```
+```{r, echo = TRUE, dependson=c("lib-ms-pammtools")}
+my.prothr <- prothr |> filter(status == 1) |> add_counterfactual_transitions() # add possible transitions
+```
+
+Second, use `as_ped_multistate` to create a PED object:
+```{r echo = TRUE}
+ped <- as_ped_multistate(
+  data       = my.prothr,
+  formula    = Surv(tstart, tstop, status)~ .,
+  transition = "transition",
+  id         = "id",
+  timescale  = "calendar", 
+  tdc_specials="concurrent"
+)
+```
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+Count events for each transition and treatment:
+```{r echo = TRUE}
+ped |> group_by(transition, treat) |> summarize(n_cases = sum(ped_status)) # observed events
+sum(ped$ped_status) # total number of observed events
+```
+
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+```{r, echo = FALSE}
+ped$transition <- as.factor(ped$transition)
+ped$treat <- as.factor(ped$treat)
+```
+
+```{r echo = TRUE, output.lines=c(8:17, 21:26)}
+pam <- pamm(ped_status ~ s(tend, by=transition) + transition * treat, data = ped)
+summary(pam)
+```
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+First, use `make_newdata` to create the data set for prediction:
+```{r, echo = FALSE}
+# load function as it is not yet included in the package
+devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
+```
+```{r, echo = TRUE}
+ndf <- make_newdata(ped
+        , tend  = unique(tend), treat  = unique(treat), transition = unique(transition))
+```
+
+Second, use `add_cumu_hazard` to calculate the cumulative hazards
+```{r echo = TRUE}
+ndf <- ndf |>
+  group_by(treat, transition) |> # important!
+  add_cumu_hazard(pam) 
+```
+
+Third, use `add_trans_prob` to calculate the transition probabilities including back-transitions
+```{r echo = TRUE, dependson=c("lib-ms-pammtools")}
+old_groups <- dplyr::groups(ndf) # save old groups before ungrouping data
+ndf_ungr <- ndf |> ungroup(transition) # probabilities differ for each transition
+ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability based on cumu hazards
+  map(ndf_ungr, .f = ~ group_by(.x, transition)) |> 
+  map(ndf_ungr, .f = ~ add_trans_prob(.x)) |>
+  map(ndf_ungr, .f = ~ group_by(.x, !!!old_groups)) |>
+  bind_rows()
+```
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+`add_trans_prob` crated a new column `trans_prob`, which can be visualized.
+
+```{r prothr-viz, echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
+# visualization
+ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(~transition) + 
+  labs(y = "Transition Probability", x = "time", color = "Treatment", fill= "Treatment")
+```
+
+---
+# Example: Abnormal prothrombin levels in liver cirrhosis
+
+```{r prothr-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
+```
+
+- Prednisone treatment reduces the transition probability into the death state
+and into abnormal prothrombin levels
+- Prednisone treatment increases the probability to exit the state of abnormal prothrombin levels
+$\implies$ subjects treated with Prednisone stay healthy longer
+

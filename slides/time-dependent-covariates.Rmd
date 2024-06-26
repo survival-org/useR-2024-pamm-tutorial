@@ -31,21 +31,14 @@ class: inverse, middle, center
 
 
 ---
-# Time-Dependent Covariates (TDCs)
+# Time-Dependent Covariates (TDCs): Setting & Data Format
 
-If a covariate $x$ changes over time $t$, the hazard rate becomes
-$$h(t | x_i(t))=h_0(t)\exp(x_i(t)\beta).$$
+Setting: covariate $x$ changes over time $t$  <br>
+$\implies$ the hazard rate becomes time dependent  <br>
+$\implies$ the hazard ratio becomes time dependent, i.e. the resulting model **does not have proportional hazards**
 
-
-Note that the resulting model **does not have proportional hazards**, since
-$$\frac{h(t | x_j(t))}{h(t | x_{k}(t))}=\exp((x_j(t)-x_k(t))\beta)$$
-depends on $t$.
-
----
-# Time-Dependent Covariates: Data Format
-
-PAMMs assume piecewise-constant hazard rate
-$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$
+PAMMs assume piecewise-constant hazard rate <br>
+$\implies$ need to assume piecewise constant $x(t) \equiv x\left(a_j\right)$ for $t \in (a_{j-1}, a_{j}]$ <br>
 $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut points
 
 - `pammtools::as_ped`: use formula special term `concurrent` to denote time-varying covariates and include all necessary cut points.<br><br>
@@ -56,17 +49,24 @@ $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut p
 ---
 # Example: Primary Biliary Cirrhosis
 
+`pbc`: Mayo Clinic Trial between 1974 and 1984, `pbcseq`: follow-up laboratory data.
+
+- 424 PBC patients
+- endpoints: `status` 0/1/2 for censored, transplant, death 
+- death (`status` = 2): event of interest (later: example on competing risks)
+- variables of interest:  `bili` bilirunbin in blood serum(mg/dl) and `protime` standardised blood clotting time
+
 .pull-left[
 `survival::pbc`:
 ```{r pbc-1, echo = FALSE}
 data("pbc", package = "survival")
-head(survival::pbc)[, c(1:5, 11, 12)] |> knitr::kable()
+head(survival::pbc, n=4)[, c(1:5, 11, 12)] |> knitr::kable()
 ```
 ]
 .pull-right[
 `survival::pbcseq`:
 ```{r pbc-2, echo = FALSE}
-head(survival::pbcseq)[, c(1, 4:5, 7, 12, 18)] |> knitr::kable()
+head(survival::pbcseq, n = 4)[, c(1, 4:5, 7, 12, 18)] |> knitr::kable()
 ```
 ]
 
@@ -89,92 +89,8 @@ This creates splits at
 + each event time
 + each time-point where the value of a TDC is updated
 
-<!-- .font90[
-
-```{r echo = TRUE}
-pbc_ped |> select(-trt, -sex, -interval) |> glimpse()
-```
-]
- -->
----
-# Example: Primary Biliary Cirrhosis (4)
-
-.pull-left[
-
-`pbcseq`:
-
-```{r pbc-2b, echo = FALSE}
-head(pbc_seq) |> knitr::kable()
-```
-
-]
-
-.pull-right[
-
-`pbc_ped[49:54, ]` via `pammtools::as_ped`:
-
-```{r pbc-4, echo = FALSE}
-pbc_ped |>
-  select(-interval, -tstart, -offset, -trt, -sex) |>
-  slice(49:54) |>
-  knitr::kable(row.names = FALSE)
-```
-
-]
-
----
-# Instantaneous and delayed effects of TDCs
-
-Default is *concurrent* or instantaneous effect:
-
-- covariate value $x_i(t)$ observed at $t = a_j$ affects the
-hazard immediately starting from interval $(a_j, a_{j+1}]$, until the next recorded change in $x$ or the end of follow-up
-
-*Lagged* effects:
-
-- use  `lag` argument in `concurrent` to specify time-delayed effect of $x_i(t)$
-- covariate value $x_i(t)$ observed at $t = a_j$ affects the
-hazard starting from later interval $(a_j + \texttt{lag}, \ldots]$ until the next (lagged) change in $x$ or end of follow-up
 
 
-```{r echo = TRUE, eval = FALSE}
-as_ped(
-  data = list(pbc_clean, pbc_seq), #!!
-  id = "id",  #!!
-  formula = Surv(time, status) ~ . + concurrent(log_bili, log_protime, tz_var = "day", lag = 1) #!!
-)
-```
-
----
-# Extended Cox analysis of the `pbc` data
-```{r pbc-cox1, echo = TRUE}
-# code adapted from vignette("timedep", package="survival")
-temp <- subset(pbc_clean, select = c(id:sex)) # baseline
-pbc2 <- survival::tmerge(temp, temp, id = id, death = event(time, status)) #set range
-pbc2 <- survival::tmerge(pbc2, pbc_seq, id = id, log_bili = tdc(day, log_bili),
-                         log_protime = tdc(day, log_protime))
-```
-.pull-left[
-Use baseline measurements only:
-```{r pbc-cox2, echo = TRUE}
-pbc_cox_base <- coxph(Surv(time, status == 2) ~
-                log(bili) + log(protime),
-              data = subset(pbc, id <= 312))
-cbind(coef(pbc_cox_base), confint(pbc_cox_base)) |> exp() |> kable()
-```
-]
-.pull-right[
-Use all measurements:
-```{r pbc-cox3, echo = TRUE}
-pbc_cox_tdc <- coxph(Surv(tstart, tstop, death == 1) ~
-                log_bili + log_protime,
-              data = pbc2)
-cbind(coef(pbc_cox_tdc), confint(pbc_cox_tdc)) |> exp() |> kable()
-```
-]
-.center[
-$\implies$ substantial differences
-]
 
 ---
 # PAM analysis of the `pbc` data
@@ -185,6 +101,26 @@ summary(pbc_pam)
 
 ---
 # PAM analysis of the `pbc` data (2)
+
+```{r pbc-cox1, echo = FALSE}
+# code adapted from vignette("timedep", package="survival")
+temp <- subset(pbc_clean, select = c(id:sex)) # baseline
+pbc2 <- survival::tmerge(temp, temp, id = id, death = event(time, status)) #set range
+pbc2 <- survival::tmerge(pbc2, pbc_seq, id = id, log_bili = tdc(day, log_bili),
+                         log_protime = tdc(day, log_protime))
+```
+
+```{r pbc-cox2, echo = FALSE}
+pbc_cox_base <- coxph(Surv(time, status == 2) ~
+                log(bili) + log(protime),
+              data = subset(pbc, id <= 312))
+```
+
+```{r pbc-cox3, echo = FALSE}
+pbc_cox_tdc <- coxph(Surv(tstart, tstop, death == 1) ~
+                log_bili + log_protime,
+              data = pbc2)
+```
 
 ```{r pbc-pam2, echo  = TRUE, eval = FALSE, cache= TRUE}
 pammtools::pamm(ped_status ~ s(tend) + log_bili + log_protime,
@@ -233,23 +169,3 @@ p_term <- ggplot(data = NULL, aes(y = fit)) + geom_line(aes(col = "PAM")) +
 (p_term %+% protime_df + aes(x = exp(log_protime))+ xlab("Protime") + ylab("ln(HR)")) +
 patchwork::plot_annotation(caption = "vertical axis shows ln(HR) w.r.t. sample average")
 ```
-
-
-<!-- ---
-# Beyond concurrent effects
-
-
-Much more generally, **pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs
-
-We refer to these types of effects as *E*xposure-*L*ag *R*esponse *A*ssociations (ELRA). See `r Citet(bib, "bender_penalized_2019")` for details
-
-
-.center[
-
-<a href="https://academic.oup.com/biostatistics/article/20/2/315/4852816">
-  <image src="figures/screenshot-elra-paper.png" height="400px">
-</image>
-</a>
-
-]
- -->

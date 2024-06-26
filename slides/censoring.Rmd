@@ -27,51 +27,6 @@ $\implies$  Instead of observing $T$, we only know that $T>c$, where $c$ is the 
 $\implies$ **Right-censoring**
 
 ---
-# Right Censoring
-
-Denote with
-
-$$\begin{align*}
-T_i  &\sim F \text{ duration times}\\
-C_i  &\sim G \text{ censoring times}\\
-\end{align*}$$
-
-with $F$ and $G$ distributions on $\mathbb{R}^+$.
-
-We can only observe
-
-$$t_i  =\min (T_i,C_i)$$
-
-and define the event/censoring indicator
-$$\delta_i =
-  \begin{cases} 1,\; \mbox{$t_i=T_i$}\\
-  0,\; \mbox{$t_i=C_i$}
-  \end{cases}$$
-
----
-# Censoring: Type I, II and III
-
-**Type I censoring**:
-All individuals are observed until a fixed time $c$.
-Example: Patients are observed until day 60 after admission to the
-hospital.
-
-**Type II censoring**:
-The study continues until the failure of $r<n$ individuals.
-Rarely used, since an open-ended random study time is generally
-impractical from a management point of view.
-
-**Type III censoring**:
-We observe $T_i$ if $T_i \leq C_i$.
-
-- Assume $T_i$ and $C_i$ are independent
-  $\implies$ **random censoring**
-    - Example: T: Survival time; C: Time until end of the study
-- Assume $T_i$ and $C_i$ are not independent
-  $\implies$ **competing risk** censoring
-    - Example: T: Survival time; C: Time until release from hospital
-
----
 # Censoring: other types
 
 **Interval-censoring**:

@@ -1,4 +1,5 @@
 
+
 ---
 class: inverse, middle, center
 
@@ -11,10 +12,8 @@ class: inverse, middle, center
   <hr color='#005500' size=1px width=900px>
 </html>
 
-
 ```{r input-setup-pem, child="setup-pem.Rmd", eval = TRUE}
 ```
-
 
 ---
 # Piecewise exponential model (PEM)
@@ -33,26 +32,6 @@ $$h_0(t) = h_{0j} \quad \forall\, t \in I_j:=(a_{j-1},a_j]$$
 with $\beta_{0j} = \log(h_{0j})$, this yields
 $$h(t|\bfx_i) = h_{0j}\exp(\bfx_i^\top\bsbeta) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) = \exp(\eta_{ij})=: h_{ij} \quad \forall t \in I_j$$
 
----
-# PEM Likelihoood
-The full likelihood for right-censored data is then
-$$\begin{align*}
-L(\bsbeta,\bsbeta_0)
-  &= \prod_{i=1}^n f(t_i|\bfx_i)^{\delta_i} S(t_i|\bfx_i)^{1-\delta_i} = \prod_{i=1}^n h(t_i|\bfx_i)^{\delta_i} \exp
-    \left(
-      -\int_0^{t_i} h(s|\bfx_i) ds
-    \right).
-\end{align*}$$
-<!--where $\bsbeta_0 = (\beta_{01},\ldots,\beta_{0J})$. <br>-->
-Since $h(s|\bfx_i)$ is piecewise constant, the integral in the (log-)likelihood is easy to compute.  <br>
-
-We define pseudo-data
-
-- event in interval $I_j$: $\delta_{ij} = \begin{cases} 1 & t_i \in I_j \mbox{ and } \ \delta_i = 1\\ 0 & \mbox{ else} \end{cases}$
-
-- time at risk in interval $I_j$: $t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\\ 0 & t_i \leq a_{j-1} \end{cases}$
-
-- "offset": $o_{ij} = \log t_{ij} \quad (o_{ij} = -\infty \mbox{ for } t_{ij} = 0)$
 
 ---
 # Piecewise Exponential Data (PED)
@@ -230,63 +209,9 @@ $\quad t_j := a_j$
 
 - also known as "start-stop" data format, as used for interval-censoring and time-varying covariates in PH models
 
----
-# PEM Likelihoood (2)
-
-Remember: $h(t|\bfx_i) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) =  \exp(\eta_{ij})$, so $h(t_i|\bfx_i)^{\delta_i} = \prod^J_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right)= \prod^{J_i}_{j=1} \exp \left( \delta_{ij} \eta_{ij}\right).$
-
-$J_i$ is the interval for which $t_i \in I_{J_i}=(a_{J_i-1},a_{J_i}]$, so
-$$\int_0^{t_i} h(s|\bfx_i) ds
-  = \sum^{J_i}_{j=1} t_{ij}\exp\left(\eta_{ij}\right) =  \sum^{J_i}_{j=1} \exp\left(o_{ij} + \eta_{ij}\right).$$
-We can now rewrite the likelihood as:
-$$L(\bsbeta,\bsbeta_0) = \prod_{i=1}^n h(t_i|\bfx_i)^{\delta_i} \exp
-    \left(
-      -\int_0^{t_i} h(s|\bfx_i) ds
-    \right) = \prod_{i=1}^n \prod_{j=1}^{J_i}
-  \exp \left( \delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
-with log-likelihood
-$$l(\bsbeta,\bsbeta_0) = \log L(\bsbeta,\bsbeta_0) = \sum_{i=1}^n \sum_{j=1}^{J_i} \left(\delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
 
 ---
-# PEM Likelihood (3)
-
-$$\text{Log-likelihood: }l(\bsbeta,\bsbeta_0) = \log L(\bsbeta,\bsbeta_0) = \sum_{i=1}^n \sum_{j=1}^{J_i} \left(\delta_{ij} \eta_{ij} - \exp(o_{ij} + \eta_{ij}) \right)$$
-
-Now assume $\delta_{ij} \stackrel{iid}{\sim} Po(\mu_{ij})$, with $\mu_{ij} = h_{ij}t_{ij}$ and density $f(\delta_{ij}) = \tfrac{\mu_{ij}^{\delta_{ij}}}{\delta_{ij}!} \exp(-\mu_{ij})$
-
-$$\begin{align*}
-l_{Po}(\bsbeta,\bsbeta_0)
-  &= \log\left(\prod_{i=1}^n\prod_{j=1}^{J_i}f(\delta_{ij})\right)=\sum_{i=1}^n\sum_{j=1}^{J_i}(\delta_{ij}\log(\mu_{ij}) - \mu_{ij})\\
-  &= \sumn\sum_{j=1}^{J_i}(\delta_{ij}\log(h_{ij})+\delta_{ij}\log(t_{ij}) - h_{ij}t_{ij})\\
-  & = \sumn\sum_{j=1}^{J_i}(\delta_{ij}\eta_{ij} - \exp(o_{ij} + \eta_{ij}) + \delta_{ij}o_{ij})
-\end{align*}$$
-
-$$\Rightarrow l_{Po}(\bsbeta, \bsbeta_0) \propto l(\bsbeta, \bsbeta_0)$$
-
-$\ra$ We can **fit a Poisson model to the pseudo-data** to obtain ML estimates of $\bsbeta$ `r Citep(bib, c("holford_analysis_1980", "laird_covariance_1981", "friedman_piecewise_1982"))`
-
----
-# PEM: Properties
-
-**Trade-off**:
-  - small $J$:
-    + crude approximation of the baseline hazard
-    + low computational cost
-    + stable
-  - large $J$:
-    + more flexible approximation
-    + high computational cost
-    + unstable
-
-In general
-  - Number of baseline parameters to estimate equal to $J$
-  - Number and placement of cut points $a_j, j=1,\ldots,J$ important for fit
-  - If no ties in the data and cut points equal event times, $\hat{\bsbeta}_{PEM}=\hat{\bsbeta}_{Cox}$ `r Citep(bib, "whitehead_fitting_1980")`
-
-
----
-# PEM: Illustration
-
+# PAM: Illustration
 ```{r, est-pem, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
 ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
 pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
@@ -298,60 +223,6 @@ pem_haz_df2 <- int_info(ped2) %>%
 p_pem_haz2 <- p_pem_haz %+% pem_haz_df2 + ylim(c(0, .35))
 ```
 
-```{r, echo=FALSE, fig.width = 6, fig.height = 3, dependson=c("sim-wb", "ex-pem-1"), out.width = "800px"}
-pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM: large J")
-```
-
---
-
-**Solution**:
-- use large $J$ and penalize differences between neighboring baseline hazards $\beta_{0j}, \beta_{0(j\pm1)}$ and/or
-
-- reduce parameter count by *basis function representation* of $h_0(t)$.
-
----
-# PEM: Penalized Likelihood
-
-**Penalization:**
-
-Impose a penalty on the step heights $$\operatorname{pen}(\bsbeta_0) = \sum_{j=2}^J (\beta_{0j} - \beta_{0j-1})^2,$$
-this leads to the penalized estimator
-$$(\widehat{\bsbeta}, \widehat{\bsbeta}_0) = \underset{\bsbeta,\bsbeta_0}{\mbox{argmax}} \ l_{pen}(\bsbeta,\bsbeta_0)$$
-with
-$$l_{pen}(\bsbeta,\bsbeta_0) = l(\bsbeta,\bsbeta_0) - \tau \ \operatorname{pen}(\bsbeta_0)$$ and
-penalty/smoothing parameter $\tau$.
-
----
-# PEM: Penalized Likelihood (2)
-
-For
-- $\tau \longrightarrow 0$ we obtain an unpenalized fit
-- $\tau \longrightarrow \infty$ we obtain $g_0(t)=\text{const}$
-
-$\ra$ It is therefore necessary to choose $\tau$ in a data-driven way.
-
-$\ra$ As we simply optimise a (penalized) Poisson log-likelihood, we can use any optimization strategy / implementation for (penalized) GLMs or GAMMs:
-**`pammtools`** provides lots of convenience functions to preprocess data and postprocess model outputs from e.g. **`mgcv`**.
-
-**PEM-representation means we can re-use *any* algorithm that handles Poisson data with offsets for complex time-to-event problems `r Citep(bib, "bender.generalMl.2021", after = "; e.g. XGboost etc.")`.**
-
----
-# PEM: Penalized Likelihood & Basis Representation
-
-**Basis Representation:**
-
-- Piecewise-constant log-baseline hazard rate can also be parameterized in terms of a spline basis, where $$g_0(t) = \sum_{\ell=1}^L \gamma_\ell B_\ell(t_j)$$
-with $t_j = a_j\ \forall\, t \in I_j$, $L \ll J$, and typically a first order differences penalty on $\bsgamma$.
-
-- *PEMs with general additive predictor:*
-Since we're fitting a Poisson-Likelihood, this can *easily* be extended by including spatial, non-linear, random or time-varying effects, e.g.
-$$h(t|\bfx_i,\bfz_i) = \exp(g_0(t) + f_1(z_{i1}) + \ldots + f_q(z_{iq}, t) +f_r(t)z_{ir} +  \bfx_i^\top\bsbeta).$$
-
-$\ra$ In analogy to Piecewise Exponential Models (PEMs), estimated via GLMs, we refer to this model class as Piecewise-exponential Additive Mixed Model `r Citep(bib, "bender_generalized_2018", before = "PAMM; ")`, estimated via GAMMs
-
-
----
-# PAM: Illustration
 ```{r, est-pam, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("est-pem")}
 pam <- mgcv::gam(ped_status ~ s(tend), data = ped2, family=poisson(), offset=offset)
 pem_haz_df2 <- pem_haz_df2 |> add_hazard(pam, overwrite = TRUE)
@@ -368,20 +239,3 @@ pem_haz1 + ylim(c(0, .35)) + ggtitle("PEM: small J") + p_pem_haz2 + ggtitle("PEM
 - Number of parameters $L$ does not depend on number of cut points $J$ (but computation time still affected by $J$)<br><br>
 - PEMs and PAMMs in **R** facilitated by package **`pammtools`**
 - Various articles (vignettes) on different topics available at [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/)
-
----
-# **`pammtools`**: Important utility functions
-
-*Pre-Processing*:
-
-- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.
-Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.
-
-*Post-Processing*:
-
-- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
-  Covariates are set to their sample means or modes by default.
-- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
-   Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`
-- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
-- `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates

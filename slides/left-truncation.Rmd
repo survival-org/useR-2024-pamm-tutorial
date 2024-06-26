@@ -14,112 +14,7 @@ class: inverse, middle, center
 
 
 ---
-class: inverse, middle, center
-
-.font120[
-**Left truncation**
-]
-
-<html>
-  <div style=---float:left></div>
-  <hr color='#005500' size=1px width=900pxpx>
-</html>
-
-
-
----
-# Left Truncation
-
-Only individuals that experienced an event *after* $y_i$ are observed, i.e., $t_i \geq y_i$.
-
-Likelihood contribution:
-$$L_i(\bstheta) = P(T=t_i | T \geq y_i| \bstheta) = \frac{f(t_i| \bstheta)}{S(y_i| \bstheta)}$$
-
-For (non-parametric) hazard based methods: <br>
-We can deal with left truncation, by only including subject in the risk after their left-truncation time
-
-**Example: Infant Mortality** (1821–1894):
-- Infants were included in the study when their mother died (left truncation event)
-- Two infants of same age whose mothers were still alive were matched into the study
-- All infants still alive were censored at the end of the study (365 days)
-- Infants that die before their mother never enter the study
-- Hypothesis: infants whose mothers are still alive survive longer
-
-
----
-# Example: Infant Mortality
-
-
-```{r, echo = TRUE}
-data("infants", package = "eha")
-infants$id <- seq_len(nrow(infants))
-head(infants)
-xtabs(~event + mother, data = infants)
-summary(infants$enter)
-summary(infants$exit)
-```
-
----
-# Left-truncation with PAMMs
-
-- Data transformation:
-  + as usual with `as_ped`, but specify left-truncation time and event time in formula
-  + in each interval, only subjects that were at risks at that time, e.g.
-    * infant enters study at day 5, when mother dies
-    * not included in intervals $(0, 1], \ldots, (4, 5]$
-    * included in intervals $(5, 6]$ ...
-- Modell fit:
-  + as usual based on properly transformed data
-  + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)
-
-
----
-# Example: Infant Mortality (2)
-
-```{r, echo = TRUE}
-infants[1, c("id", "enter", "exit", "event", "mother", "age"), ]
-ped_infants <- infants |> as_ped(Surv(exit, event) ~ .)
-ped_infants |> filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age) |> slice(1, n())
-ped_infants_lt <- infants |> as_ped(Surv(enter, exit, event) ~ .)
-ped_infants_lt |>filter(id == 1) |> select(tstart, tend, interval, ped_status, mother, age)  |> slice(1, n())
-```
-
----
-# Example: Infant Mortality (3)
-
-"Naive" analysis ignoring left-truncation:
-
-```{r echo = TRUE, output.lines = c(8:14, 18:20)}
-pam_infants <- pamm(
-  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
-  data = ped_infants)
-summary(pam_infants) # truncated output
-```
-
-```{r echo = TRUE}
-exp(coef(pam_infants)[2])
-```
-
----
-# Example: Infant Mortality (4)
-Analysis that takes into account left-truncation:
-
-.font90[
-```{r echo = TRUE, output.lines = c(8:14, 18:20)}
-pam_infants_lt <- pamm(
-  ped_status ~ s(tend) +  mother + age + sex + parish + civst + ses,
-  data = ped_infants_lt)
-summary(pam_infants_lt) # truncated output
-```
-]
-
-```{r echo = TRUE}
-exp(coef(pam_infants_lt)[2])
-```
-
-
----
-# Left-truncation in Event History Analysis
+# Event History Analysis: Left-Truncation becomes relevant
 
 - So far we only considered transitions from the initial status (e.g., alive) to a single event of interest (e.g., death)
 - However, methods for Lifetime Data Analysis can also be applied to settings with
@@ -131,7 +26,7 @@ multiple states and transitions between them
 
 
 ---
-# Left-truncation in Event History Analysis
+# Event History Analysis: Left-Truncation becomes relevant
 .center[
 <img src="figures/event-history-analysis.svg", width="600px">
 ]
@@ -140,3 +35,18 @@ multiple states and transitions between them
   + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at different time points
   + Similarly, for transitions "2 $\ra$ 1" and "2 $\ra$ 3"
   + State "3" is a competing risk w.r.t. state "1"
+  
+  
+---
+# Event History Analysis: Even with Left-truncation, PAMMs work as before
+
+- Data transformation:
+  + as usual with `as_ped`, but specify left-truncation time and event time in formula
+  + in each interval, only subjects that were at risks at that time, e.g.
+    * subject enters study at day 5,
+    * not included in intervals $(0, 1], \ldots, (4, 5]$
+    * included in intervals $(5, 6]$ ...
+- Modell fit:
+  + as usual based on properly transformed data
+  + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)
+
