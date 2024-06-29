@@ -18,19 +18,18 @@ class: inverse, middle, center
 ---
 # Piecewise exponential model (PEM)
 
-**Cox PH model:** $$h(t|\bfx_i) = h_0(t) \exp(\bfx_i^\top\bsbeta) = \exp(g_0(t) + \bfx_i^\top \bsbeta)$$
-where the baseline hazard is written as $g_0(t) = \log h_0(t)$. <br>
+- Same "hazard structure" as in Cox PH Models.
+- BUT can make use of GAMM advantages, e.g. splines (here $f$) dependent on $x$ and $t$, mixed effects (here $b$)
+$$\log(h_{k,e}(t|\mathbf{x}_{i, k, e}, \ell_i)) = \beta_{0,k,e} + f_{0,k,e}(t) + \sum_{p=1}^P f_p(x_{i,k,e,p}, t) + b_{\ell_i}$$
+where the baseline hazard is written as $\beta_{0,k,e} + f_{0,k,e}(t)$. <br>
 We now want to estimate both $h_0(t)$ as well as the parameters
 $\bsbeta$ via ML.
 
-We decompose the time axis into $J$ intervals, using cut points $a_0, a_1, \ldots, a_J$:
-$$(0=a_0,a_1],(a_1,a_2],\ldots,(a_{j-1},a_j],\ldots,(a_{J-1},a_J]$$
-These interval cut points will often correspond to event and/or censoring times, but don't need to.
+Why piecewise? 
+- Decompose the time axis into intervals
+- Assume piecewise constant hazards in these intervals
 
-We assume piecewise constant hazards
-$$h_0(t) = h_{0j} \quad \forall\, t \in I_j:=(a_{j-1},a_j]$$
-with $\beta_{0j} = \log(h_{0j})$, this yields
-$$h(t|\bfx_i) = h_{0j}\exp(\bfx_i^\top\bsbeta) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) = \exp(\eta_{ij})=: h_{ij} \quad \forall t \in I_j$$
+**What data do we need for that?**
 
 
 ---

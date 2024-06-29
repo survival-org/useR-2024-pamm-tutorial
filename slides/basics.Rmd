@@ -14,7 +14,7 @@ class: inverse, middle, center
 </html>
 
 ---
-# General setting
+# `pammtools` tackles survival problems
 
 We are interested in:
 
@@ -29,41 +29,21 @@ A random variable $T \geq 0$ defining the length of the time span is observed.
 
 We want to characterize/estimate the distribution of event times $T$, potentially depending on covariates (under censoring)
 
-
 ---
-# Description of a distribution
+# `pammtools` facilitates the pre- and post-processing for survival analyses.
 
-The distribution of a non-negative continuous random
-variable $T$ can be described as follows:
-.font90[
+TODAY: focus on pre- and post-processing, and estimating hazards using `mgcv::gam` 
 
-- *density:* $f_T(t) := f(t)$ <br><br><br>
+BUT: PEM based approaches are not limited to statistical models (cf. `r Citet(bib, "bender.generalMl.2021")`)
 
-- *cumulative distribution function:* $F_T(t):=F(t):=P(T \leq t)$ <br><br><br>
-
-- *survival function:* $S_T(t):=S(t):=P(T > t)=1-F(t)$ <br><br><br>
-
-- *hazard rate:* $h_T(t):=h(t):=\displaystyle\lim_{\Delta t\searrow 0}\frac{1}{\Delta t}P(t \leq T<t+\Delta t\,|\,T\geq t)$ <br><br><br>
-
-- *cumulative hazard rate:* $H_T(t):=H(t):=\int_0^t h(u)du$ <br><br><br>
-
+.center[
+<img src="figures/ml-for-survival-graph.svg", width = "800px">
 ]
 
 
 ---
-# **`pammtools`**: Hazard, Density and Survival ... important utility functions are implemented
+# Using `mgcv::gam` for estimation has many adavantages
 
-*Pre-Processing*:
-
-- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.
-Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.
-
-*Post-Processing*:
-
-- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
-  Covariates are set to their sample means or modes by default.
-- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
-   Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`, `add_trans_prob`
-- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
-- `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
-
+- Model flexibly, especially complex predictor structures
+- Include mixed effects easily
+- Yield smooth effects prone towards over-fitting

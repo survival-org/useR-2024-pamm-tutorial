@@ -47,8 +47,6 @@ Compiled: `r Sys.Date()`
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
 ```
 
-```{r input-censoring, child="censoring.Rmd", eval = TRUE}
-```
 
 ```{r input-pem, child = "pem.Rmd", eval = TRUE}
 ```
@@ -82,3 +80,10 @@ Compiled: `r Sys.Date()`
 <!-- Bibliography -->
 ```{r input-references, child = "references.Rmd", eval = TRUE}
 ```
+
+<!-- Backup -->
+
+```{r input-backup, child="backup.Rmd", eval = TRUE}
+```
+
+

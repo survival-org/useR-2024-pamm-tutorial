@@ -13,16 +13,23 @@ class: inverse, middle, center
   <hr color='#005500' size=2px width=900px>
 </html>
 
+
 ---
-# `pbc`, `veterans`, `sir.adm`, `prothr`... what's the point?
+# **`pammtools`**: Hazard, Density and Survival ... important utility functions are implemented
 
-Summarizing, after many examples, we have seen that `pammtools`...
-- ...can deal with time-dependent covariates
-- ...can deal with time-varying effects
-- ...can deal with left truncation
-- ...can combine the above flexibility and can deal with event-history data, especially multi-state settings with recurrent events.
+*Pre-Processing*:
 
-However, that is not all... Many more examples can be found here [adibender.github.io/pammtools](https://adibender.github.io/pammtools/articles/)
+- `as_ped(data, formula, cut, ...)` creates PED-formatted data suitable for PAMMs.
+Also merges additional datasets for time-dependent covariates according to the specification in `formula` and handles left-truncation.
+
+*Post-Processing*:
+
+- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
+  Covariates are set to their sample means or modes by default.
+- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
+   Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`, `add_trans_prob`
+- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
+- `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
 
 ---
 # Exposure-Lag-Response Associations
@@ -68,43 +75,3 @@ In general, PEM based approaches not limited to statistical modeling (cf. `r Cit
 ]
 
 
----
-# Beyond Statistical Modeling
-For example gradient boosted trees (no adjustment to **`xgboost`** needed, only data trafo)
-
-.column[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Time-varying effects]
-.column[&nbsp;&nbsp;&nbsp;&nbsp; Shared vs. cause-specific effects (in CR)]
-
-
-.center[
-
-<img src="figures/splits-grey.svg", width = "900px">
-
-]
-
-
----
-# Deep Statistical Modeling
-
-DeepPAMM `r Citep(bib, c("kopper_semistructured_2021", "kopper.deeppamm.2022"))`: NN-based extension of PAMMs based on *Semi-structured Distributional Regression* framework by David Rügamer
-
-$$
-    h(t|\mathbf{x}, \mathbf{z}_1, ...) = f(\mathbf{x}, t) + \gamma_1 d_1(\mathbf{z}_1) + \dots + \gamma_G d_G(\mathbf{z}_G),
-$$
-
-where $f(\mathbf{x}, t)$ is our standard (structured) PAMM predictor and
-$d_1(\mathbf{z}_1),  ...$ are embedings learned from (deep) neural networks
-
-Allows to specify standard survival model depending on tabular features (with stratified baseline hazards, TVE, etc.) + incorporate information from other modalities like image, text, etc.
-
-
----
-# The Future of PAMMs/pammtools
-
-- currently working on further functionalities in the multi-state setting, like confidence intervals for transition probabilities
-
-- in the future: refactor backend for more seemless integration of other GAMM software (**`brms`**, **`mboost`**, etc. )
-
-- lots of "under the hood work"
-
-- contributions are welcome!

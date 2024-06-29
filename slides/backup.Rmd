@@ -1,0 +1,41 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font150[
+**Backup**
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+```{r input-censoring, child="censoring.Rmd", eval = TRUE}
+```
+
+---
+# Piecewise exponential model (PEM)
+
+
+$$h(t|\bfx_i) = h_0(t) \exp(\bfx_i^\top\bsbeta) = \exp(g_0(t) + \bfx_i^\top \bsbeta)$$
+where the baseline hazard is written as $g_0(t) = \log h_0(t)$. <br>
+We now want to estimate both $h_0(t)$ as well as the parameters
+$\bsbeta$ via ML.
+
+We decompose the time axis into $J$ intervals, using cut points $a_0, a_1, \ldots, a_J$:
+$$(0=a_0,a_1],(a_1,a_2],\ldots,(a_{j-1},a_j],\ldots,(a_{J-1},a_J]$$
+These interval cut points will often correspond to event and/or censoring times, but don't need to.
+
+We assume piecewise constant hazards
+$$h_0(t) = h_{0j} \quad \forall\, t \in I_j:=(a_{j-1},a_j]$$
+with $\beta_{0j} = \log(h_{0j})$, this yields
+$$h(t|\bfx_i) = h_{0j}\exp(\bfx_i^\top\bsbeta) = \exp(\beta_{0j} + \bfx_i^\top \bsbeta) = \exp(\eta_{ij})=: h_{ij} \quad \forall t \in I_j$$
+
+
+
+
+
+
