@@ -1,26 +1,10 @@
 
-
----
-class: inverse, middle, center
-
-.center[
-.font150[
-**Part III: Non-proportional Hazards**
-]
-]
-
-<html>
-  <div style=---float:left></div>
-  <hr color='#005500' size=1px width=900pxpx>
-</html>
-
-
 ---
 class: inverse, middle, center
 
 .center[
 .font120[
-**Time-dependent Covariates**
+**Non-proportional Hazards**
 ]
 ]
 
@@ -31,7 +15,7 @@ class: inverse, middle, center
 
 
 ---
-# Time-Dependent Covariates (TDCs): Setting & Data Format
+# Time-Dependent Covariates (TDCs): Setting & PAMMs applicability
 
 Setting: covariate $x$ changes over time $t$  <br>
 $\implies$ the hazard rate becomes time dependent  <br>
@@ -47,7 +31,7 @@ $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut p
 
 
 ---
-# Example: Primary Biliary Cirrhosis
+# TDCs - Example: Primary Biliary Cirrhosis
 
 `pbc`: Mayo Clinic Trial between 1974 and 1984, `pbcseq`: follow-up laboratory data.
 
@@ -71,7 +55,7 @@ head(survival::pbcseq, n = 4)[, c(1, 4:5, 7, 12, 18)] |> knitr::kable()
 ]
 
 ---
-# Example: Primary Biliary Cirrhosis (2)
+# TDCs - Example: Primary Biliary Cirrhosis (2)
 
 Data transformation using `as_ped` function with formula special `concurrent`:
 
@@ -93,14 +77,14 @@ This creates splits at
 
 
 ---
-# PAM analysis of the `pbc` data
+# TDCs - PAM analysis of the `pbc` data
 ```{r pbc-pam, echo  =TRUE, eval = TRUE, cache= TRUE, output.lines = c(8:18)}
 pbc_pam <- pamm(ped_status ~ s(tend) + log_bili + log_protime, data = pbc_ped)
 summary(pbc_pam)
 ```
 
 ---
-# PAM analysis of the `pbc` data (2)
+# TDCs - PAM analysis of the `pbc` data (2)
 
 ```{r pbc-cox1, echo = FALSE}
 # code adapted from vignette("timedep", package="survival")
@@ -138,7 +122,7 @@ coef(pbc_cox_tdc)
 ```
 
 ---
-# PAM analysis of the `pbc` data (3)
+# TDCs - PAM analysis of the `pbc` data (3)
 Coefficient estimates are similar, especially for the
 effect of `bili`:
 ```{r pbc-fig,  fig.width = 9, fig.height = 4, out.width = "\\textwidth"}

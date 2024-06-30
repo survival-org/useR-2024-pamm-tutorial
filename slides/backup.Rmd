@@ -13,6 +13,9 @@ class: inverse, middle, center
   <hr color='#005500' size=2px width=900px>
 </html>
 
+```{r tdc, child = "time-dependent-covariates.Rmd", eval = TRUE}
+```
+
 ```{r input-censoring, child="censoring.Rmd", eval = TRUE}
 ```
 
