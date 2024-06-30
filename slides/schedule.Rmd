@@ -1,30 +1,10 @@
 
 ---
-# Today's Schedule
+# Today's Agenda
 
-.pull-left[
-
-
-| Time          |       Topic                |
-|---------------|----------------------------|
-|09:00 - 09:15  | Welcome                    |
-|09:15 - 10:00  |Introduction to PEMs/PAMMs  |
-|10:00 - 10:30  |Time-dependent Covariates|
-|10:30 - 10:45  |*Coffe break*|
-|10:45 - 11:30  |Time-varying Effects|
-|11:30 - 12:00  |Left-truncation|
-|12:00 - 12:30  |Exercise I|
-|12:30 - 13:30  |*Lunch Break*|
-
-]
-
-.pull-right[
-
-| Time          |       Topic                |
-|---------------|----------------------------|
-|13:30 - 14:30  |Recurrent Events|
-|14:30 - 15:30  |Competing Risks|
-|15:30 - 15:45  |*Coffe Break*|
-|15:45 - 16:45  |Exercise II (Competing Risks)|
-
-]
+1. Why is `pammtools` useful? <br>
+A quick introduction 
+2. How can `pammtools` help me analyze survival data? <br>
+An overview of example results tackled in today's session
+3. What exactly do I need to do to get results? <br>
+An insight into the nitty-gritty details of producing the example results with R
