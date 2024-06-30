@@ -2,9 +2,9 @@
 ---
 # Today's Agenda
 
-1. Why is `pammtools` useful? <br>
-A quick introduction 
-2. How can `pammtools` help me analyze survival data? <br>
-An overview of example results tackled in today's session
-3. What exactly do I need to do to get results? <br>
-An insight into the nitty-gritty details of producing the example results with R
+1. Why is `pammtools` useful? - An overview of survival analysis results tackled in today's session 
+2. How can `pammtools` help me analyze survival data? - A quick overview to get from survival data to interpretable results
+3. What exactly do I need to do to get results? - An insight into the nitty-gritty details of producing survival analysis results with `pammtools` in R <br>
+3.1 Basic Scenarios: Baseline, Linear Effects, Non-Linear Effects <br>
+3.2 Non-proportional hazards: time-dependent covariates, time-varying effects <br>
+3.3 Event-History analysis: competing risks, multi-state scenario <br>

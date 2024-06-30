@@ -1,4 +1,24 @@
 
+---
+# TL;DR
+
+- several survival tasks can be transformed to standard regression tasks
+
+- this is done via data transformation (and mild assumptions, e.g. piece-wise constant hazard)
+
+- exact data transformation depends on the survival task (right-censoring, left-truncation, recurrent events, ...)
+
+- once data is transformed, we estimate the hazard in each interval, conditional on covariates
+- in this setting
+  + *time* is a covariate, the baseline hazard is a function of time
+  + time-varying effects are interactions of other covariates with time
+  + stratified baseline hazards are interactions of time with categorical variables
+
+- any method that can optimize Poisson likelihood with offset can be used for estimation
+
+- GAMMs particularly suitable, especially modelling baseline hazard + time-related effects with splines
+
+
 
 # Example: Chronic Granulotamous Disease (CGD)
 
@@ -96,6 +116,24 @@ R package **`pammtools`** greatly facilitates work with PEMs/PAMMs, as it abtrac
 <img src="figures/pammtools-twitter.png" height="500px">
 ]
 
+---
+# Description of a distribution
+
+The distribution of a non-negative continuous random
+variable $T$ can be described as follows:
+.font90[
+
+- *density:* $f_T(t) := f(t)$ <br><br><br>
+
+- *cumulative distribution function:* $F_T(t):=F(t):=P(T \leq t)$ <br><br><br>
+
+- *survival function:* $S_T(t):=S(t):=P(T > t)=1-F(t)$ <br><br><br>
+
+- *hazard rate:* $h_T(t):=h(t):=\displaystyle\lim_{\Delta t\searrow 0}\frac{1}{\Delta t}P(t \leq T<t+\Delta t\,|\,T\geq t)$ <br><br><br>
+
+- *cumulative hazard rate:* $H_T(t):=H(t):=\int_0^t h(u)du$ <br><br><br>
+
+]
 
 ---
 # Materials
@@ -188,6 +226,184 @@ We observe $T_i$ if $T_i \leq C_i$.
 - Assume $T_i$ and $C_i$ are not independent
   $\implies$ **competing risk** censoring
     - Example: T: Survival time; C: Time until release from hospital
+
+
+---
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+
+---
+count: false
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped1.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+
+
+---
+count: false
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped2.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+- define: $\delta_{ij} = \begin{cases}1 & t_i \in I_j \text{ and } \delta_i = 1\\0 & \text{else}\end{cases}$
+
+---
+count: false
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped3.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+- define: $\delta_{ij} = \begin{cases}1 & t_i \in I_j \text{ and } \delta_i = 1\\0 & \text{else}\end{cases}$,
+$\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$
+
+
+
+---
+count: false
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped4.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+- define: $\delta_{ij} = \begin{cases}1 & t_i \in I_j \text{ and } \delta_i = 1\\0 & \text{else}\end{cases}$,
+$\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$,
+$\quad t_j := a_j$
+
+
+---
+count: false
+# Piecewise Exponential Data (PED)
+
+<div class="row">
+<div class = "column", align = "center">
+Data in "standard" time-to-event format <br>
+</div>
+<div class = "column", align = "center">
+Data in PED format <br>
+</div>
+</div>
+
+<div class = "row" align = "middle">
+<div class = "column", align = "middle">
+.middle[
+<img src="figures/tab-standard.svg", width = "300px" align="middle"><br>
+$\ra$ transform to PED using $a_0=0, a_1 = 1, a_2=1.5, a_3=3$
+]
+</div>
+
+<div class = "column" align ="middle">
+<img src="figures/tab-ped.svg", width = "400px" align="middle" >
+</div>
+</div>
+
+- define: $\delta_{ij} = \begin{cases}1 & t_i \in I_j \text{ and } \delta_i = 1\\0 & \text{else}\end{cases}$,
+$\quad t_{ij} = \begin{cases} a_j - a_{j-1} & a_j < t_i\\ t_i - a_{j-1} & a_{j-1} < t_i \leq a_j\end{cases}$,
+$\quad t_j := a_j$
+
+- also known as "start-stop" data format, as used for interval-censoring and time-varying covariates in PH models
+
 
 
 ---
@@ -581,7 +797,6 @@ We can deal with left truncation, by only including subject in the risk after th
 - Infants that die before their mother never enter the study
 - Hypothesis: infants whose mothers are still alive survive longer
 
-
 ---
 # Example: Infant Mortality
 
@@ -676,6 +891,20 @@ using:
 - all cause cumulative hazard: $H(t) = \sum_{e=1}^{K} H_e(t)$
 - all cause survival probability: $S(t) = \exp(-H(t))$
 
+
+---
+# Cause-Specific PAMMs
+
+- data transformation as usual with `as_ped`:
+  + automatically recognizes if status variable has more then 2 unique values
+  + creates one data set per non-censoring event, or a combined data set with additional column `cause` (default)
+
+- fit cause-specific PAMMs jointly w/ interactions of `cause` variable with other predictors, including time, and shared effects for others
+$$h_e(t|\bfx) = \exp(g(t, e, \bfx))$$
+
+- interpretation **conditional on *non-occurrence*** of all competing events
+  $\implies$ no (direct) inference on CIF, which is often more relevant
+- however, easy to calculate the CIF from the $h_e(t|\bfx), e=1,\ldots, K$
 
 
 ---
@@ -850,6 +1079,48 @@ All of these can again be conveniently estimated using PAMMs/GAMMs with appropri
 <img src="figures/elra-code.png"></img>
 
 ]
+
+
+---
+# Beyond Statistical Modeling
+For example gradient boosted trees (no adjustment to **`xgboost`** needed, only data trafo)
+
+.column[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Time-varying effects]
+.column[&nbsp;&nbsp;&nbsp;&nbsp; Shared vs. cause-specific effects (in CR)]
+
+
+.center[
+
+<img src="figures/splits-grey.svg", width = "900px">
+
+]
+
+
+---
+# Deep Statistical Modeling
+
+DeepPAMM `r Citep(bib, c("kopper_semistructured_2021", "kopper.deeppamm.2022"))`: NN-based extension of PAMMs based on *Semi-structured Distributional Regression* framework by David Rügamer
+
+$$
+    h(t|\mathbf{x}, \mathbf{z}_1, ...) = f(\mathbf{x}, t) + \gamma_1 d_1(\mathbf{z}_1) + \dots + \gamma_G d_G(\mathbf{z}_G),
+$$
+
+where $f(\mathbf{x}, t)$ is our standard (structured) PAMM predictor and
+$d_1(\mathbf{z}_1),  ...$ are embedings learned from (deep) neural networks
+
+Allows to specify standard survival model depending on tabular features (with stratified baseline hazards, TVE, etc.) + incorporate information from other modalities like image, text, etc.
+
+
+---
+# The Future of PAMMs/pammtools
+
+- currently working on further functionalities in the multi-state setting, like confidence intervals for transition probabilities
+
+- in the future: refactor backend for more seemless integration of other GAMM software (**`brms`**, **`mboost`**, etc. )
+
+- lots of "under the hood work"
+
+- contributions are welcome!
 
 ---
 # Back to Statistical Modeling
