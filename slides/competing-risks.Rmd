@@ -25,23 +25,9 @@ class: inverse, middle, center
 - transient state $0$
 - *absorbing* states $1,\ldots,K$
 
----
-# Cause-Specific PAMMs
-
-- data transformation as usual with `as_ped`:
-  + automatically recognizes if status variable has more then 2 unique values
-  + creates one data set per non-censoring event, or a combined data set with additional column `cause` (default)
-
-- fit cause-specific PAMMs jointly w/ interactions of `cause` variable with other predictors, including time, and shared effects for others
-$$h_e(t|\bfx) = \exp(g(t, e, \bfx))$$
-
-- interpretation **conditional on *non-occurrence*** of all competing events
-  $\implies$ no (direct) inference on CIF, which is often more relevant
-- however, easy to calculate the CIF from the $h_e(t|\bfx), e=1,\ldots, K$
-
 
 ---
-# Example: Pneumonia on admission in intensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients
 
 The example follows `r Citet(bib, "beyersmann_competing_2012")`: "Competing Risks and Multistate Models with R"
 
@@ -57,7 +43,7 @@ sir.adm |> filter(id %in% c(41, 395, 17058)) |> knitr::kable()
 
 
 ---
-# Example: Pneumonia on admission in intensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients (2)
 
 Data in PED format:
 
@@ -68,7 +54,7 @@ ped |> filter(id == 41) |> group_by(id, cause) |> kable()
 ```
 
 ---
-# Example: Pneumonia on admission in intensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients (3)
 ```{r echo = TRUE, output.lines=c(8:13, 17:20)}
 pam <- pamm(ped_status ~ s(tend, by = cause) + cause*pneu, data = ped)
 summary(pam)
@@ -81,11 +67,11 @@ cbind(estimate = est, lo = est - 2 * se, hi = est + 2 * se) |> exp() |> round(2)
 ```
 
 ---
-# Example: Pneumonia on admission in intensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients (4)
 
 - pneumonia doesn't appear to have a clear effect on the death hazard
 - this does *not* imply that pneumonia has no effect on mortality <br>
-$implies$ Calculate the CIF to check effect of pneumonia on probability of death
+$\implies$ Calculate the CIF to check effect of pneumonia on probability of death
 
 First, use `make_newdata` to create the data set to calculate the CIF
 
@@ -105,7 +91,7 @@ ndf <- ndf |>
 ```
 
 ---
-# Example: Pneumonia on admission in intensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients (5)
 
 `add_cif` crated a new columns `cif`, `cif_lower`, and `cif_upper`, which can be visualized.
 
@@ -117,7 +103,7 @@ ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
 ```
 
 ---
-# Example: Pneumonia on admission inintensive care unit patients
+# Competing Risks - Example: Pneumonia on admission in intensive care unit patients (6)
 
 ```{r pneu-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
 ```

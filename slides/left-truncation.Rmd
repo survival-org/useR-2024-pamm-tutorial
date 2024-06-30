@@ -2,15 +2,16 @@
 ---
 class: inverse, middle, center
 
-.font150[
-**Part IV: Event History Analysis**
+.center[
+.font120[
+**Event-History Analysis**
+]
 ]
 
 <html>
   <div style=---float:left></div>
   <hr color='#005500' size=1px width=900pxpx>
 </html>
-
 
 
 ---
@@ -42,10 +43,7 @@ multiple states and transitions between them
 
 - Data transformation:
   + as usual with `as_ped`, but specify left-truncation time and event time in formula
-  + in each interval, only subjects that were at risks at that time, e.g.
-    * subject enters study at day 5,
-    * not included in intervals $(0, 1], \ldots, (4, 5]$
-    * included in intervals $(5, 6]$ ...
+  + in each interval, only subjects that were at risks at that time
 - Modell fit:
   + as usual based on properly transformed data
   + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)
