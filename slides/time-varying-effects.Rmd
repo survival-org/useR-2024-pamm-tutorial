@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font120[
-**Time-varying effects**
+**Non-proportional Hazards**
 ]
 ]
 
@@ -15,9 +15,8 @@ class: inverse, middle, center
 
 
 
-
 ---
-# Modelling Time-Varying Effects: Easily modelled with PAMMs
+# Modelling Time-Varying Effects (TVEs): Setting & PAMMs applicability
 
 **Setting**: 
 The effect of a covariate $x$ can change as time progresses, e.g. effect of patients' status at admission to the hospital vanishes over time,
@@ -37,9 +36,9 @@ $\beta(t) \equiv \sum^L_{\ell=1} \gamma_\ell B_\ell(a_{j})\; \forall\, t \in (a_
 -  for data created with `as_ped`, `tend` is $a_j$:  use `s(tend, by = <X>)`
 
 ---
-# Example: Veterans' Administration Lung Cancer study
+# TVEs - Example: Veterans' Administration Lung Cancer study
 
-Randomised trial of survival times under two treatment regimens for lung cancer:
+**Recap:** Randomised trial of survival times under two treatment regimens for lung cancer
 - endpoint: `status` (censoring = 0)
 - variables of interest:  `karno` Karnovsky performance score (consider as TVE), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
 ```{r vet-load, echo = TRUE}
@@ -50,49 +49,49 @@ rbind(head(survival::veteran, n = 2), tail(survival::veteran, n = 2))[, c(1:5, 8
 ```
 
 ---
-# Example: Fixed shape for time-variation (1)
+# TVEs - Example: Fixed shape vs. Flexible time-varying effects (1)
 
-Literature suggests time-varying effect of `karno` with
+Instead of linear effect, literature suggests time-varying effect of `karno` with
 $f(x_{\text{karno}},t) = \beta_{\text{karno}} x_{\text{karno}} + \beta_{\text{karno},t}x_{\text{karno}}\log(t+20)$
 
-```{r vet-cox, echo =TRUE}
-vet_cox_logt <- coxph(formula = Surv(time, status) ~ trt + prior + karno + tt(karno),
-                     tt = function(x, t, ...) x * log(t + 20), #!!
-                     data = veteran)
-coef(vet_cox_logt)
-```
-```{r, echo=FALSE}
-ttcoef <- round(coef(vet_cox_logt), 3)[3:4]
-```
-$\implies$ Estimated shape of time variation:
-$$\hat\beta_{\text{karno}}+\hat\beta_{\text{karno},t}\cdot\log(t+20) = `r ttcoef[1]` + `r ttcoef[2]`\cdot\log(t+20)$$
-
----
-# Example: Fixed shape for time-variation (2)
-
-.pull-left[
-Equivalent PAM specification:
+PAM specification:
 ```{r vet-pam, echo =TRUE}
 # data transformation
-veteran_ped <- veteran |>
-    as_ped(Surv(time, status)~., id = "id") |>
+veteran_ped <- veteran |> as_ped(Surv(time, status)~., id = "id") |>
     mutate(logt20 = log(tend + 20))
 # fit model
-vet_pam_logt <- pamm(
-  ped_status ~ s(tend) + trt + prior +
-                 karno + karno:logt20, #!!
-  data = veteran_ped
-)
+vet_pam_logt <- pamm(ped_status ~ s(tend) + trt + prior + karno + karno:logt20,
+  data = veteran_ped)
 ```
-]
-.pull-right[
-Compare fits:
-```{r vet-pam-coef, echo = TRUE}
-cbind(
-  pam = coef(vet_pam_logt)[2:5],
-  cox = coef(vet_cox_logt)) |> kable()
+
+
+---
+# TVEs - Example: Fixed shape vs. Flexible time-varying effects (2)
+
+Alternatively, specify the effect of `karno` as
+$f(x_{\text{karno}},t) = f(t)\cdot x_{\text{karno}}$, where $f(t)$
+is estimated from the data:
+```{r vet-pam-tve, echo =TRUE}
+# no need for separate time-constant effect for karno here:
+vet_pam_tve <- pamm(
+  ped_status ~ s(tend) + trt + prior + s(tend, by = karno),
+  data = veteran_ped)
+AIC(vet_pam_logt, vet_pam_tve)
 ```
-]
+$\implies$ assumed shape "good enough" in this case, Tensor spline has minimal AIC
+
+---
+# Example: Flexible time-varying effects (2)
+```{r gg_tv_karno, echo =TRUE, fig.height = 3, fig.width = 5, out.height= "300px"}
+term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
+  mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
+  mutate(pam.fit = coef(vet_pam_logt)["karno"] + coef(vet_pam_logt)["karno:logt20"] * log(tend + 20))
+ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
+    geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+    geom_step(aes(y = pam.fit, col = "PAM log(t)")) +
+    scale_color_manual(name = "Model: ", values = c(Set1[1:2], "black")) +
+    xlab("t") + ylab(expression(hat(beta)(t)))
+```
 
 ---
 # Stratification: Time-varying Effects of Factors
@@ -108,7 +107,7 @@ different "baseline" hazard for the category encoded by $x_i$.
 - Also `r Citet(bib, "pedersen_hierarchical_2019")` for overview of hierarchical GAMs
 
 ---
-# Example: Stratification via factorial TVE
+# TVEs - Example: Stratification via factorial TVE
 
 ```{r vet-strat-cox, echo =TRUE, fig.height = 3, fig.width = 5, out.height=".4\textheight", warning = TRUE}
 vet_cox_strata <- coxph(Surv(time, status) ~ strata(celltype),
@@ -126,7 +125,7 @@ cox_fit <- vet_cox_strata |> basehaz()
 ```
 
 ---
-# Example: Flexible time-varying effects (2)
+# TVEs - Example: Stratification via factorial TVE (2)
 
 ```{r gg_vet_strata, echo =TRUE, fig.height = 5, fig.width = 7, out.width  = "600px",}
 ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +
