@@ -1,20 +1,5 @@
 
 ---
-class: inverse, middle, center
-
-.center[
-.font120[
-**Competing Risks**
-]
-]
-
-<html>
-  <div style=---float:left></div>
-  <hr color='#005500' size=1px width=900pxpx>
-</html>
-
-
----
 # Event History Analysis: Competing Risks Setting
 
 .center[
