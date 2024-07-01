@@ -1,20 +1,5 @@
 
 ---
-class: inverse, middle, center
-
-.center[
-.font120[
-**Multi-State Models**
-]
-]
-
-<html>
-  <div style=---float:left></div>
-  <hr color='#005500' size=1px width=900pxpx>
-</html>
-
-
----
 # Event History Analysis: Multi-State Setting
 
 .center[
@@ -27,21 +12,7 @@ class: inverse, middle, center
 
 
 ---
-# Cause-Specific PAMMs
-
-- data transformation as usual with `as_ped` / `as_ped_multistate`:
-  + automatically recognizes if status variable has more than two unique values
-  + automatically recognizes if id variable occurs multiple times in the data set
-  + creates one data set per non-censoring event or stack them with an additional column `transition`
-
-- fit cause-specific PAMMs jointly w/ interactions of `transition` variable with other predictors, including time, and shared effects for others
-$$h_{k,e}(t|\bfx) = \exp(g(t, k, e, \bfx))$$
-
-- transition probability depends on all competing events and current state at time $t$
-- however, transition probabilities are easy to calculate from the cumulative hazards
-
----
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis
 
 - 488 liver cirrhosis patients
 - endpoints: `status` = 0/1 for censoring, event
@@ -55,7 +26,7 @@ prothr |> filter(id == 46) |> knitr::kable() # example patients
 
 
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (2)
 
 ```{r, echo = FALSE}
 prothr <- prothr %>% 
@@ -67,7 +38,9 @@ First, use `add_counterfactual_transitions` to add all possible transitions at e
 ```{r lib-ms-pammtools, echo = FALSE}
 # load function as it is not yet included in the package
 devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
+#source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/R/add-functions.R")
 source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/tmp/add_transition_probabilities.R")
+
 library(tidyverse)
 ```
 ```{r, echo = TRUE, dependson=c("lib-ms-pammtools")}
@@ -87,7 +60,7 @@ ped <- as_ped_multistate(
 ```
 
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (3)
 
 Count events for each transition and treatment:
 ```{r echo = TRUE}
@@ -97,7 +70,7 @@ sum(ped$ped_status) # total number of observed events
 
 
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (4)
 ```{r, echo = FALSE}
 ped$transition <- as.factor(ped$transition)
 ped$treat <- as.factor(ped$treat)
@@ -108,13 +81,9 @@ pam <- pamm(ped_status ~ s(tend, by=transition) + transition * treat, data = ped
 summary(pam)
 ```
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (5)
 
 First, use `make_newdata` to create the data set for prediction:
-```{r, echo = FALSE}
-# load function as it is not yet included in the package
-devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
-```
 ```{r, echo = TRUE}
 ndf <- make_newdata(ped
         , tend  = unique(tend), treat  = unique(treat), transition = unique(transition))
@@ -139,7 +108,7 @@ ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability b
 ```
 
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (6)
 
 `add_trans_prob` crated a new column `trans_prob`, which can be visualized.
 
@@ -150,13 +119,12 @@ ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(
 ```
 
 ---
-# Example: Abnormal prothrombin levels in liver cirrhosis
+# Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (7)
 
 ```{r prothr-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
 ```
 
-- Prednisone treatment reduces the transition probability into the death state
-and into abnormal prothrombin levels
-- Prednisone treatment increases the probability to exit the state of abnormal prothrombin levels
-$\implies$ subjects treated with Prednisone stay healthy longer
+- Prednisone treatment reduces the transition probability into the death and abnormal prothrombin levels state
+- Differences between probabilities is small (Confidence Intervalls soon to be implemented)
+$\implies$ only minor effect of Prednisone compared to Placebo
 

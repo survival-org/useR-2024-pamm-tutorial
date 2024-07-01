@@ -8,3 +8,4 @@
 3.1 Basic Scenarios: Baseline, Linear Effects, Non-Linear Effects <br>
 3.2 Non-proportional hazards: time-dependent covariates, time-varying effects <br>
 3.3 Event-History analysis: competing risks, multi-state scenario <br>
+3. Summary and Outlook

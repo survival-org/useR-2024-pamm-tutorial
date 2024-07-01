@@ -19,6 +19,7 @@ An overview of survival analysis results tackled in today's session
 
 ---
 # With `pammtools`, you can calculate single event baseline hazards
+**Example: Monoclonal gammopathy data `mgus` from the `survival` package**
 
 ```{r, est-pem-ex, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
 ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
@@ -57,7 +58,7 @@ mgus_haz_df <- int_info(mgus1_ped) |>
 ```
 
 .pull-left[
-Example (Baseline): Monoclonal gammopathy data `mgus` from the `survival` package
+**Task:** Calculate and plot the baseline hazard
 - 241 observations
 - `status`: 0/1 for censoring or interval ends in an event, here plasma cell malignancy
 - `stop`: days from diagnosis to event
@@ -75,14 +76,209 @@ ggplot(mgus_haz_df, aes(x = tend, y=hazard)) +
 ---
 # With `pammtools`, you can do what `coxph` can do
 
+**Example: Veterans' Administration Lung Cancer study** 
+
+```{r vet-load-lin-ex, echo = FALSE}
+veteran <- survival::veteran  |> filter(time < 400)  |> #reduce data for ex
+  mutate(trt   = 1L * (trt == 2),
+         prior = 1L * (prior == 10))
+
+vet_cox_lin <- coxph(formula = Surv(time, status) ~ trt + prior + karno, 
+                     data = veteran)
+# data transformation
+veteran_ped <- veteran |> as_ped(Surv(time, status)~., id = "id")
+# fit model
+vet_pam_lin <- pamm(ped_status ~ s(tend) + trt + prior + karno,
+  data = veteran_ped)
+
+```
+
+.pull-left[
+**Task:** Compare the linear effect of `trt`, `prior`, and `karno` between Cox and Pam. <br>
+Randomised trial of survival times under two treatment regimens for lung cancer:
+- endpoint: `status` (censoring = 0)
+- variables of interest:  `karno` Karnovsky performance score (first: consider linear effect, later: time-varying effect), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
+]
+
+.pull-right[
+Compare Cox and PAM fits:
+```{r vet-pam-coef-lin-ex, echo = FALSE}
+cbind(
+  pam = coef(vet_pam_lin)[2:4],
+  cox = coef(vet_cox_lin)) |> kable()
+```
+]
+
 ---
 # With `pammtools`, you can model non-linear effects
 
 ---
 # With `pammtools`, you can model time-varying effects
 
+**Example: Veterans' Administration Lung Cancer study** 
+
+```{r vet-load-ex, echo = FALSE}
+veteran <- survival::veteran  |> filter(time < 400)  |> #reduce data for ex
+  mutate(trt   = 1L * (trt == 2),
+         prior = 1L * (prior == 10))
+# data transformation
+veteran_ped <- veteran |> as_ped(Surv(time, status)~., id = "id") |>
+    mutate(logt20 = log(tend + 20))
+# fit model
+vet_pam_logt <- pamm(ped_status ~ s(tend) + trt + prior + karno + karno:logt20,
+  data = veteran_ped)
+vet_pam_tve <- pamm(
+  ped_status ~ s(tend) + trt + prior + s(tend, by = karno),
+  data = veteran_ped)
+```
+
+.pull-left[
+**Task (1):** Compare the linear effect and the smooth effect of the time and the Karnovsky performance score interaction <br>
+
+Randomised trial of survival times under two treatment regimens for lung cancer
+- endpoint: `status` (censoring = 0)
+- variables of interest:  `karno` Karnovsky performance score (consider as TVE), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
+]
+.pull-right[
+```{r, echo =FALSE, fig.height = 3, fig.width = 5, out.width= "500px"}
+term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
+  mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
+  mutate(pam.fit = coef(vet_pam_logt)["karno"] + coef(vet_pam_logt)["karno:logt20"] * log(tend + 20))
+ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
+    geom_stepribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2) +
+    geom_step(aes(y = pam.fit, col = "PAM log(t)")) +
+    scale_color_manual(name = "Model: ", values = c(Set1[1:2], "black")) +
+    xlab("t") + ylab(expression(hat(beta)(t)))
+```
+]
+
+---
+# With `pammtools`, you can model time-varying effects
+**Example: Veterans' Administration Lung Cancer study** 
+
+.pull-left[
+**Task (2):** Stratification, i.e. compare time-varying effects of factors between Cox and PAM <br>
+- endpoint: `status` (censoring = 0)
+- variables of interest:  `celltype` 1=squamous, 2=smallcell, 3=adeno, 4=large, interacting linearly (Cox) and smoothly (PAM) with `time`
+]
+.pull-right[
+
+```{r, echo =FALSE, fig.height = 3, fig.width = 5, out.height=".4\textheight", warning = FALSE}
+vet_cox_strata <- coxph(Surv(time, status) ~ strata(celltype),
+                        data = veteran)
+vet_pam_strata <- pamm(ped_status ~ s(tend, by = celltype) + celltype,
+                       data = veteran_ped)
+
+# extract fitted cumulative hazards:
+pam_fit <- veteran_ped |>
+  ped_info() |> slice(rep(1:n(), each = 4)) |>
+  mutate(celltype = rep(levels(celltype), times = n()/4)) |>
+  group_by(celltype) |> arrange(tend)  |>  #!!
+  add_cumu_hazard(vet_pam_strata)
+cox_fit <- vet_cox_strata |> basehaz()
+```
+```{r gg_vet_strata-ex, echo =FALSE, fig.height = 5, fig.width = 7, out.width  = "500px",}
+ggplot(pam_fit, aes(x = tend, y = cumu_hazard)) + geom_step(aes(col = celltype)) +
+    geom_stepribbon(aes(ymin = cumu_lower, ymax = cumu_upper, fill = celltype), alpha = 0.1) +
+    geom_line(data = cox_fit, aes(x = time, y = hazard, col = strata), linetype = 4, size = 1) +
+    ylab(expression(hat(H)(t))) + xlab("t") + coord_cartesian(ylim = c(0, 10))
+```
+]
+
 ---
 # With `pammtools`, you can model competing risks
 
+**Example: Pneumonia on admission in intensive care unit patients** <br>
+The example follows `r Citet(bib, "beyersmann_competing_2012")`: "Competing Risks and Multistate Models with R"
+
+```{r echo = FALSE}
+data(sir.adm, package = "mvna")
+ped <- as_ped(sir.adm, Surv(time, status)~ pneu, combine = TRUE) |>
+  mutate(cause = as.factor(cause))
+pam <- pamm(ped_status ~ s(tend, by = cause) + cause*pneu, data = ped)
+ndf <- ped |> make_newdata(tend  = unique(tend), pneu  = unique(pneu), cause = unique(cause))
+ndf <- ndf |>
+  group_by(cause, pneu) |> # important!
+  add_cif(pam) |> ungroup() |>
+  mutate(
+    cause = factor(cause, labels = c("Discharge", "Death")),
+    pneu  = factor(pneu, labels = c("No Pneumonia", "Pneumonia"))
+  )
+```
+
+.pull-left[
+**Task:** Visualize the cause-specific transition hazards of "Discharge" and "Death"
+- 747 ICU patients
+- endpoints: `status` = 0/1/2 for censoring, discharge from the ICU, and death
+- event of interest: death (`status` = 2), competing event: discharge from the ICU (`status` = 1)
+- variable of interest  `pneu`: A patient's pneumonia status at admission (0 = no pneumonia, 1 = pneumonia)
+]
+
+.pull-right[
+```{r, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "500px"}
+# visualization
+ggplot(ndf, aes(x = tend, y = cif)) + geom_line(aes(col = pneu)) +
+  geom_ribbon(aes(ymin = cif_lower, ymax = cif_upper, fill = pneu), alpha = .3) +
+  facet_wrap(~cause) + labs(y = "CIF", x = "time", color = "Pneumonia", fill = "Pneumonia")
+```
+]
+
 ---
 # With `pammtools`, you can model multi-state settings
+**Example: Abnormal prothrombin levels in liver cirrhosis**
+.pull-left[
+**Task:** Visualize treatment effect on transition probabilities into abnormal prothrombin level (and back) and death state
+- 488 liver cirrhosis patients
+- endpoints: `status` = 0/1 for censoring, event
+- events of interest: `status` = 1 and `to` = 2/3 for abnormal prothrombin level, death
+- variable of interest  `treat`: A patient's treatment (Placebo, Prednisone)
+]
+
+```{r, echo = FALSE}
+data(prothr, package = "mstate")
+prothr <- prothr %>% 
+  rename(tstart = Tstart, tstop = Tstop) %>%
+  filter(tstart != tstop)
+# load function as it is not yet included in the package
+devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
+#source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/R/add-functions.R")
+source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/tmp/add_transition_probabilities.R")
+
+library(tidyverse)
+
+my.prothr <- prothr |> filter(status == 1) |> add_counterfactual_transitions() # add possible transitions
+
+ped <- as_ped_multistate(
+  data       = my.prothr,
+  formula    = Surv(tstart, tstop, status)~ .,
+  transition = "transition",
+  id         = "id",
+  timescale  = "calendar", 
+  tdc_specials="concurrent"
+)
+
+ped$transition <- as.factor(ped$transition)
+ped$treat <- as.factor(ped$treat)
+
+pam <- pamm(ped_status ~ s(tend, by=transition) + transition * treat, data = ped)
+ndf <- make_newdata(ped
+        , tend  = unique(tend), treat  = unique(treat), transition = unique(transition))
+ndf <- ndf |>
+  group_by(treat, transition) |> # important!
+  add_cumu_hazard(pam) 
+old_groups <- dplyr::groups(ndf) # save old groups before ungrouping data
+ndf_ungr <- ndf |> ungroup(transition) # probabilities differ for each transition
+ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability based on cumu hazards
+  map(ndf_ungr, .f = ~ group_by(.x, transition)) |> 
+  map(ndf_ungr, .f = ~ add_trans_prob(.x)) |>
+  map(ndf_ungr, .f = ~ group_by(.x, !!!old_groups)) |>
+  bind_rows()
+```
+
+.pull-right[
+```{r prothr-viz-ex, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "500px"}
+# visualization
+ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(~transition) + 
+  labs(y = "Transition Probability", x = "time", color = "Treatment", fill= "Treatment")
+```
+]
