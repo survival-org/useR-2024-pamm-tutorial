@@ -17,7 +17,7 @@ A quick overview to get from survival data to interpretable results
 # `pammtools` exploits the benefits of piecewise exponential additive mixed models (PAMMs)
 
 **Why exponential additive mixed model?**
-- Same "hazard structure" as in Cox PH Models $implies$ exponential
+- Same "hazard structure" as in Cox PH Models $\implies$ exponential
 - BUT can make use of GAMM advantages, e.g. smooth effects ($f$) dependent on $x$ and $t$, mixed effects $b$ for clusters $\ell$
 $$\log(h_{k,e}(t|\mathbf{x}_{i, k, e}, \ell_i)) = \beta_{0,k,e} + f_{0,k,e}(t) + \sum_{p=1}^P f_p(x_{i,k,e,p}, t) + b_{\ell_i}$$
 where the baseline hazard is written as $\beta_{0,k,e} + f_{0,k,e}(t)$. <br>

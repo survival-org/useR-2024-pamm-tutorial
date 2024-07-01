@@ -78,7 +78,7 @@ vet_pam_tve <- pamm(
   data = veteran_ped)
 AIC(vet_pam_logt, vet_pam_tve)
 ```
-$\implies$ assumed shape "good enough" in this case, Tensor spline has minimal AIC
+$\implies$ assumed shape "good enough" in this case. But, not always do literature suggestions exist.
 
 ---
 # TVEs - Example: Fixed shape vs. Flexible time-varying effects (3)

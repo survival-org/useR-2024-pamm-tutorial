@@ -35,7 +35,7 @@ class: inverse, middle, center
 
 Randomised trial of survival times under two treatment regimens for lung cancer:
 - endpoint: `status` (censoring = 0)
-- variables of interest:  `karno` Karnovsky performance score (first: consider linear effect, later: time-varying effect), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
+- variables of interest:  `karno` Karnovsky performance score (first: consider linear effect, later: time-varying effect), `trt` treatment (standard = 1, test = 2), `prior` prior therapy (no = 0, yes = 10)
 ```{r vet-load-lin, echo = TRUE}
 veteran <- survival::veteran  |> filter(time < 400)  |> #reduce data for ex
   mutate(trt   = 1L * (trt == 2),
@@ -57,7 +57,7 @@ summary(vet_cox_lin)
 # Linear Effect - Example: Veterans' Administration Lung Cancer study
 
 In `pammtools`, we again create the PED. Then use the same pipeline as for Cox
-```{r vet-pam-lin, echo =TRUE, output.lines=c(8:12, 17:19)}
+```{r vet-pam-lin, echo =TRUE, output.lines=c(8:13, 17:19)}
 # data transformation
 veteran_ped <- veteran |> as_ped(Surv(time, status)~., id = "id")
 # fit model

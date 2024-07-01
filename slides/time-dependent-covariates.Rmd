@@ -1,5 +1,6 @@
 
 ---
+count: false
 class: inverse, middle, center
 
 .center[
@@ -15,6 +16,7 @@ class: inverse, middle, center
 
 
 ---
+count: false
 # Time-Dependent Covariates (TDCs): Setting & PAMMs applicability
 
 Setting: covariate $x$ changes over time $t$  <br>
@@ -31,6 +33,7 @@ $\implies$ need to include all times at which $x_i$ changes for any $i$ as cut p
 
 
 ---
+count: false
 # TDCs - Example: Primary Biliary Cirrhosis
 
 `pbc`: Mayo Clinic Trial between 1974 and 1984, `pbcseq`: follow-up laboratory data.
@@ -55,6 +58,7 @@ head(survival::pbcseq, n = 4)[, c(1, 4:5, 7, 12, 18)] |> knitr::kable()
 ]
 
 ---
+count: false
 # TDCs - Example: Primary Biliary Cirrhosis (2)
 
 Data transformation using `as_ped` function with formula special `concurrent`:
@@ -77,6 +81,7 @@ This creates splits at
 
 
 ---
+count: false
 # TDCs - PAM analysis of the `pbc` data
 ```{r pbc-pam, echo  =TRUE, eval = TRUE, cache= TRUE, output.lines = c(8:18)}
 pbc_pam <- pamm(ped_status ~ s(tend) + log_bili + log_protime, data = pbc_ped)
@@ -84,6 +89,7 @@ summary(pbc_pam)
 ```
 
 ---
+count: false
 # TDCs - PAM analysis of the `pbc` data (2)
 
 ```{r pbc-cox1, echo = FALSE}
@@ -122,6 +128,7 @@ coef(pbc_cox_tdc)
 ```
 
 ---
+count: false
 # TDCs - PAM analysis of the `pbc` data (3)
 Coefficient estimates are similar, especially for the
 effect of `bili`:

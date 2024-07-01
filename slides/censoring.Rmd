@@ -1,5 +1,6 @@
 
 ---
+count: false
 class: inverse, middle, center
 
 .center[
@@ -15,6 +16,7 @@ class: inverse, middle, center
 
 
 ---
+count: false
 # Censoring
 
 In many studies:
@@ -27,6 +29,7 @@ $\implies$  Instead of observing $T$, we only know that $T>c$, where $c$ is the 
 $\implies$ **Right-censoring**
 
 ---
+count: false
 # Censoring: other types
 
 **Interval-censoring**:
@@ -39,6 +42,7 @@ there is no information about how much earlier.
 - Example: Same setting as above, but the patient was examined for the first time in year 4.
 
 ---
+count: false
 # Censoring vs. Truncation
 
 It is important to distinguish between **censoring** and **truncation**
