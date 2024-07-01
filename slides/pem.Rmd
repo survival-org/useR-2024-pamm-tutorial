@@ -4,7 +4,8 @@
 class: inverse, middle, center
 
 .font150[
-**Part II: Intro to PEMs and PAMMs**
+**How can `pammtools` help me analyze survival data?** <br>
+A quick overview to get from survival data to interpretable results
 ]
 
 <html>
@@ -12,11 +13,8 @@ class: inverse, middle, center
   <hr color='#005500' size=1px width=900px>
 </html>
 
-```{r input-setup-pem, child="setup-pem.Rmd", eval = TRUE}
-```
-
 ---
-# Piecewise exponential additive mixed model (PAMM)
+# `pammtools` exploits the benefits of piecewise exponential additive mixed models (PAMMs)
 
 **Why exponential additive mixed model?**
 - Same "hazard structure" as in Cox PH Models $implies$ exponential
@@ -252,7 +250,7 @@ mgus_haz_df <- int_info(mgus1_ped) |>
 ```
 
 .pull-left[
-Example: Monoclonal gammopathy data `mgus` from the `survival` package
+Example (Baseline): Monoclonal gammopathy data `mgus` from the `survival` package
 - 241 observations
 - `status`: 0/1 for censoring or interval ends in an event, here plasma cell malignancy
 - `stop`: days from diagnosis to event

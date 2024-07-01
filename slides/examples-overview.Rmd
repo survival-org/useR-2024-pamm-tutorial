@@ -1,0 +1,88 @@
+
+---
+class: inverse, middle, center
+
+.center[
+.font150[
+**Why is `pammtools` useful?** <br>
+An overview of survival analysis results tackled in today's session
+]
+]
+
+<html>
+  <div style='float:left'></div>
+  <hr color='#005500' size=2px width=900px>
+</html>
+
+```{r input-setup-pem, child="setup-pem.Rmd", eval = TRUE}
+```
+
+---
+# With `pammtools`, you can calculate single event baseline hazards
+
+```{r, est-pem-ex, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
+ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
+pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
+pem_haz_df2 <- int_info(ped2) %>%
+  mutate(offset = intlen) %>%
+  mutate(
+    hazard = predict(object=pem2, ., type="response"),
+    survival = exp(-cumsum(hazard * intlen)))
+p_pem_haz2 <- p_pem_haz %+% pem_haz_df2 + ylim(c(0, .35))
+```
+
+```{r, est-pam-ex, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("est-pem-ex")}
+pam <- mgcv::gam(ped_status ~ s(tend), data = ped2, family=poisson(), offset=offset)
+pem_haz_df2 <- pem_haz_df2 |> add_hazard(pam, overwrite = TRUE)
+p_pam_haz <- p_pem_haz %+% pem_haz_df2 +
+  geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) + ylim(c(0, .35))
+```
+
+```{r, echo=FALSE, fig.width = 6, fig.height = 6, dependson=c("est-pam-ex"), out.width = "800px"}
+p_pam_haz_plot <- p_pam_haz + ggtitle("PAM")
+```
+
+```{r mgus-haz-df-ex, echo=FALSE}
+data(mgus1, package="survival")
+mgus1_clean <- mgus1 |> filter(event == "pcm")
+mgus1_ped <- as_ped(data=mgus1_clean, 
+                   Surv(stop, status) ~ .)
+pam <- mgcv::gam(ped_status ~ s(tend), 
+                 data= mgus1_ped, 
+                 family=poisson(), 
+                 offset = offset)
+mgus_haz_df <- int_info(mgus1_ped) |> 
+  mutate(offset = intlen) |> 
+  add_hazard(pam) 
+```
+
+.pull-left[
+Example (Baseline): Monoclonal gammopathy data `mgus` from the `survival` package
+- 241 observations
+- `status`: 0/1 for censoring or interval ends in an event, here plasma cell malignancy
+- `stop`: days from diagnosis to event
+]
+
+.pull-right[
+```{r, echo=FALSE, eval=TRUE, dependson=c("mgus-haz-df-ex"), fig.width=5, fig.height=3, out.width="500px"}
+ggplot(mgus_haz_df, aes(x = tend, y=hazard)) +
+  geom_line() + ylim(c(0, 0.001)) + xlim(c(0,9000)) +
+  geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) + xlab("time")
+```
+]
+
+
+---
+# With `pammtools`, you can do what `coxph` can do
+
+---
+# With `pammtools`, you can model non-linear effects
+
+---
+# With `pammtools`, you can model time-varying effects
+
+---
+# With `pammtools`, you can model competing risks
+
+---
+# With `pammtools`, you can model multi-state settings

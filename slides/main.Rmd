@@ -44,6 +44,9 @@ Compiled: `r Sys.Date()`
 ```{r input-schedule, child = "schedule.Rmd", eval = TRUE}
 ```
 
+```{r input-overview, child="examples-overview.Rmd", eval = TRUE}
+```
+
 ```{r input-basics, child="basics.Rmd", eval = TRUE}
 ```
 
@@ -53,10 +56,10 @@ Compiled: `r Sys.Date()`
 ```{r input-pem, child = "pem.Rmd", eval = TRUE}
 ```
 
-<!--simple ex: aus der vignette: MGUS data -->
-
-```{r tdc, child = "time-dependent-covariates.Rmd", eval = TRUE}
+```{r input-lin, child = "linear-effects.Rmd", eval = TRUE}
 ```
+
+<!--simple ex: aus der vignette: MGUS data -->
 
 ```{r tve, child = "time-varying-effects.Rmd", eval = TRUE}
 ```
@@ -71,8 +74,7 @@ Compiled: `r Sys.Date()`
 ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
 ```
 
-```{r input-ms, child = "multi-state.Rmd", eval = TRUE}
-```
+
 
 ```{r input-outlook, child = "outlook.Rmd", eval = TRUE}
 ```
