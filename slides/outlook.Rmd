@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font150[
-**Part V: Summary, Extensions, and Outlook**
+**4. Summary and Outlook**
 ]
 ]
 
@@ -31,23 +31,7 @@ Also merges additional datasets for time-dependent covariates according to the s
 - `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
 - `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
 
----
-# Exposure-Lag-Response Associations
 
-Much more generally, PAMMs/**pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs
-
-
-We refer to these types of effects as *E*xposure-*L*ag *R*esponse *A*ssociations (ELRA). See `r Citet(bib, "bender_penalized_2019")` for details
-
-
-.center[
-
-<a href="https://academic.oup.com/biostatistics/article/20/2/315/4852816">
-  <image src="figures/screenshot-elra-paper.png" height="400px">
-</image>
-</a>
-
-]
 
 ---
 # Beyond (mgcv) GAMMs

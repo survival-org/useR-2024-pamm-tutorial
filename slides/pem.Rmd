@@ -4,7 +4,7 @@
 class: inverse, middle, center
 
 .font150[
-**How can `pammtools` help me analyze survival data?** <br>
+**2. How can `pammtools` help me analyze survival data?** <br>
 A quick overview to get from survival data to interpretable results
 ]
 

@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font120[
-**Event-History Analysis**
+**3.3 Event-History Analysis**
 ]
 ]
 

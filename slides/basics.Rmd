@@ -1,20 +1,5 @@
 
 ---
-class: inverse, middle, center
-
-.center[
-.font150[
-**Why is `pammtools` useful?** <br>
-An overview of survival analysis results tackled in today's session
-]
-]
-
-<html>
-  <div style='float:left'></div>
-  <hr color='#005500' size=2px width=900px>
-</html>
-
----
 # `pammtools` tackles survival problems
 
 We are interested in:

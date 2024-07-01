@@ -5,7 +5,7 @@ class: inverse, middle, center
 
 .center[
 .font150[
-**What exactly do I need to do to get results?** <br>
+**3. What exactly do I need to do to get results?** <br>
 An insight into the nitty-gritty details of producing survival analysis results with `pammtools` in R
 ]
 ]
@@ -21,7 +21,7 @@ class: inverse, middle, center
 
 .center[
 .font120[
-**Basic Scenarios**
+**3.1 Basic Scenarios**
 ]
 ]
 

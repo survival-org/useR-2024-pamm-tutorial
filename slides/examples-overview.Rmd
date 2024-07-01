@@ -4,7 +4,7 @@ class: inverse, middle, center
 
 .center[
 .font150[
-**Why is `pammtools` useful?** <br>
+**1. Why is `pammtools` useful?** <br>
 An overview of survival analysis results tackled in today's session
 ]
 ]

@@ -21,7 +21,7 @@ class: title-slide, middle
 <br><br><br><br>
 
 <h2 style="color:#1F1414">
-Piece-wise exponential (Additive) Mixed Model (PAMM)
+Flexible Additive Models for Survival and Event-history Analysis
 </h2>
 <h3 style="color:#1F1414"> useR! Salzburg - Webinar </h3>
 
@@ -74,7 +74,8 @@ Compiled: `r Sys.Date()`
 ```{r input-cr, child = "competing-risks.Rmd", eval = TRUE}
 ```
 
-
+```{r input-ms, child = "multi-state.Rmd", eval = TRUE}
+```
 
 ```{r input-outlook, child = "outlook.Rmd", eval = TRUE}
 ```

@@ -984,6 +984,21 @@ transition indicators $\text{from}$ and $\text{to}$ for event $0 \rightarrow 1$,
 
 
 ---
+# Multi-State Setting: Cause-Specific PAMMs
+
+- data transformation as usual with `as_ped` / `as_ped_multistate`:
+  + automatically recognizes if status variable has more than two unique values
+  + automatically recognizes if id variable occurs multiple times in the data set
+  + creates one data set per non-censoring event or stack them with an additional column `transition`
+
+- fit cause-specific PAMMs jointly w/ interactions of `transition` variable with other predictors, including time, and shared effects for others
+$$h_{k,e}(t|\bfx) = \exp(g(t, k, e, \bfx))$$
+
+- transition probability depends on all competing events and current state at time $t$
+- however, transition probabilities are easy to calculate from the cumulative hazards
+
+
+---
 # Cause-Specific Hazards and Transition Probabilities
 
 We define $T$ as the time to any event $E \in \{k \rightarrow e: k, e = 1,\ldots,K\}$.
@@ -1020,7 +1035,23 @@ $$\left(\begin{array}{ccc}
   0 & 0 & 1
 \end{array}\right)$$
 
+---
+# Exposure-Lag-Response Associations
 
+Much more generally, PAMMs/**pammtools** can also be used to fit delayed and time-limited, cumulative and time-varying effects of TDCs
+
+
+We refer to these types of effects as *E*xposure-*L*ag *R*esponse *A*ssociations (ELRA). See `r Citet(bib, "bender_penalized_2019")` for details
+
+
+.center[
+
+<a href="https://academic.oup.com/biostatistics/article/20/2/315/4852816">
+  <image src="figures/screenshot-elra-paper.png" height="400px">
+</image>
+</a>
+
+]
 
 ---
 # Exposure-Lag-Response Associations
