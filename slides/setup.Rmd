@@ -133,4 +133,5 @@ library(flexsurv)
 
 library(mvna)
 library(eha) #infants data
+library(sp) # spatial
 ```

@@ -15,7 +15,7 @@ class: inverse, middle, center
 
 
 ---
-# Event History Analysis: Left-Truncation becomes relevant
+# Event History Analysis
 
 - So far we only considered transitions from the initial status (e.g., alive) to a single event of interest (e.g., death)
 - However, methods for Lifetime Data Analysis can also be applied to settings with
@@ -24,27 +24,3 @@ multiple states and transitions between them
 .center[
 <img src="figures/event-history-analysis.svg", width="700px">
 ]
-
-
----
-# Event History Analysis: Left-Truncation becomes relevant
-.center[
-<img src="figures/event-history-analysis.svg", width="600px">
-]
-- Left-truncation can occur in each of the "0" states
-- In addition, left truncation is relevant for each (secondary) transition in a multi-state model (MSM), e.g.,
-  + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at different time points
-  + Similarly, for transitions "2 $\ra$ 1" and "2 $\ra$ 3"
-  + State "3" is a competing risk w.r.t. state "1"
-  
-  
----
-# Event History Analysis: Even with Left-truncation, PAMMs work as before
-
-- Data transformation:
-  + as usual with `as_ped`, but specify left-truncation time and event time in formula
-  + in each interval, only subjects that were at risks at that time
-- Modell fit:
-  + as usual based on properly transformed data
-  + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)
-

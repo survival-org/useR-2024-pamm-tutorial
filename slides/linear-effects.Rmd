@@ -35,8 +35,12 @@ class: inverse, middle, center
 
 Randomised trial of survival times under two treatment regimens for lung cancer:
 - endpoint: `status` (censoring = 0)
-- variables of interest:  `karno` Karnovsky performance score (first: consider linear effect, later: time-varying effect), `trt` treatment (standard = 1, test = 2), `prior` prior therapy (no = 0, yes = 10)
-```{r vet-load-lin, echo = TRUE}
+- variables of interest:
+    - `karno` Karnovsky performance score (first: consider linear effect, later: time-varying effect),
+    - `trt` treatment (standard = 0, test = 1),
+    - `prior` prior therapy (no = 0, yes = 1)
+
+```{r vet-load-lin, echo = FALSE}
 veteran <- survival::veteran  |> filter(time < 400)  |> #reduce data for ex
   mutate(trt   = 1L * (trt == 2),
          prior = 1L * (prior == 10))
@@ -46,31 +50,31 @@ rbind(head(survival::veteran, n = 2), tail(survival::veteran, n = 2))[, c(1:5, 8
 ---
 # Linear Effect - Example: Veterans' Administration Lung Cancer study
 
-We start comparing the linear effect of `trt`, `prior`, and `karno` between Cox and Pam.
+We start comparing the linear effect of `trt`, `prior`, and `karno` between Cox and PAM.
 
-```{r vet-cox-lin, echo =TRUE, output.lines=c(6:9, 13:16)}
-vet_cox_lin <- coxph(formula = Surv(time, status) ~ trt + prior + karno, 
-                     data = veteran)
-summary(vet_cox_lin)
+.pull-left[
+Cox
+```{r vet-cox-lin, echo =TRUE}
+vet_cox_lin <- coxph(
+  formula = Surv(time,status)~trt+prior+karno,
+  data = veteran)
 ```
----
-# Linear Effect - Example: Veterans' Administration Lung Cancer study
+]
 
-In `pammtools`, we again create the PED. Then use the same pipeline as for Cox
-```{r vet-pam-lin, echo =TRUE, output.lines=c(8:13, 17:19)}
+.pull-right[
+PAM
+```{r vet-pam-lin, echo =TRUE}
 # data transformation
-veteran_ped <- veteran |> as_ped(Surv(time, status)~., id = "id")
+vet_ped <- veteran |> as_ped(Surv(time,status)~.)
 # fit model
-vet_pam_lin <- pamm(ped_status ~ s(tend) + trt + prior + karno,
-  data = veteran_ped)
-summary(vet_pam_lin)
+vet_pam_lin <- pamm(
+  formula = ped_status~s(tend)+trt+prior+karno,
+  data = vet_ped)
 ```
----
-# Linear Effect - Example: Veterans' Administration Lung Cancer study
+]
 
-Compare fits:
-```{r vet-pam-coef-lin, echo = TRUE}
+```{r vet-pam-coef-lin, echo = FALSE}
 cbind(
-  pam = coef(vet_pam_lin)[2:4],
-  cox = coef(vet_cox_lin)) |> kable()
+  cox = coef(vet_cox_lin),
+  pam = coef(vet_pam_lin)[2:4]) |> kable()
 ```

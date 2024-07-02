@@ -1010,26 +1010,26 @@ From the cause specific hazards, we can derive the **transition probability matr
 $$ P(t) = \prod_{\tau \in \mathcal{T_t}} \left(\textbf{I} + d\textbf{H}(\tau)\right)$$
 
 using:
-- cause specific cumulative hazard: $H_{k ,e}(t) = \int^t_0 h_{k ,e}(s)ds$ 
+- cause specific cumulative hazard: $H_{k ,e}(t) = \int^t_0 h_{k ,e}(s)ds$
 - increment of cause specific cumulative hazard $dH_{k ,e}(t) = H_{k ,e}(t) - H_{k ,e}(t-)$, where $H_{k ,e}(t-)$ denotes the cumulative hazard just before time $t$
 - diagonal elements of $dH_{k ,e}(t)$ are constructed s.t. rows of transition probability matrix sum up to $1$.
 
 
 ---
 # Cause-Specific Hazards and Transition Probabilities (2)
-Mini Example: 
-- Consider classical illness-death-model, i.e. possible transitions $0 \rightarrow 1$, $0\rightarrow 2$, $1 \rightarrow 2$ 
-- Assume discrete event times $\mathcal{T} = \mathbb{Z}$, i.e. $\mathcal{T}_t = \{\tau \in \mathbb{Z}: \tau < t\}$. 
+Mini Example:
+- Consider classical illness-death-model, i.e. possible transitions $0 \rightarrow 1$, $0\rightarrow 2$, $1 \rightarrow 2$
+- Assume discrete event times $\mathcal{T} = \mathbb{Z}$, i.e. $\mathcal{T}_t = \{\tau \in \mathbb{Z}: \tau < t\}$.
 - Assume time-independent hazards, i.e. $h(t) = h(s), \forall t, s \in \mathcal{T}$
 
 Then the transition probability matrix at time $t = 1$ can be written as
-$$\left(\begin{array}{ccc} 
+$$\left(\begin{array}{ccc}
   1-H_{0 ,1}-H_{0 ,2} & H_{0 ,1} & H_{0 ,2} \\
   0 & 1-H_{1 ,2} & H_{1 ,2} \\
   0 & 0 & 1
 \end{array}\right)$$
 The transition probability matrix at time $t = 2$ can be written as
-$$\left(\begin{array}{ccc} 
+$$\left(\begin{array}{ccc}
   1-H_{0 ,1}-H_{0 ,2} & H_{0 ,1} & H_{0 ,2} \\
   0 & 1-H_{1 ,2} & H_{1 ,2} \\
   0 & 0 & 1
@@ -1164,3 +1164,25 @@ Allows to specify standard survival model depending on tabular features (with st
 
 ]
 
+
+---
+# Event History Analysis: Left-Truncation becomes relevant
+.center[
+<img src="figures/event-history-analysis.svg", width="600px">
+]
+- Left-truncation can occur in each of the "0" states
+- In addition, left truncation is relevant for each (secondary) transition in a multi-state model (MSM), e.g.,
+  + When estimating the hazard for transition "1 $\rightarrow$ 2", subjects arrive in state "1" at different time points
+  + Similarly, for transitions "2 $\ra$ 1" and "2 $\ra$ 3"
+  + State "3" is a competing risk w.r.t. state "1"
+
+
+---
+# Event History Analysis: Even with Left-truncation, PAMMs work as before
+
+- Data transformation:
+  + as usual with `as_ped`, but specify left-truncation time and event time in formula
+  + in each interval, only subjects that were at risks at that time
+- Modell fit:
+  + as usual based on properly transformed data
+  + hazard can be estimated unbiasedly (assuming left-truncation time and event time are independent)

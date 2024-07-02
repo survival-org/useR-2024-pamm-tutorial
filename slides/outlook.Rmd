@@ -24,11 +24,10 @@ Also merges additional datasets for time-dependent covariates according to the s
 
 *Post-Processing*:
 
-- `make_newdata(x, <optional covariate specifications>)` creates PED-formatted data suitable for evaluating PAMM estimates for all intervals using `add_???`-functions.
-  Covariates are set to their sample means or modes by default.
-- `add_???(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
+- `make_newdata(x, <optional covariate specifications>)` flexibly creates PED-formatted data suitable to calculate any quantity of interest (hazrd, survival, hazard ratios, etc.), using `add_<quantity>`-functions (unspecified covariates are set to their sample means or modes by default).
+- `add_<quantity>(newdata, object)` computes PAMM point estimates (and CIs) from a model `object` on `newdata` and appends them to `newdata`.  Resulting `data.frame` useful for custom visualizations etc.
    Flavors: `add_surv_prob`, `add_hazard`, `add_cumu_hazard`, `add_cif`, `add_term`, `add_trans_prob`
-- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames`
+- `tidy_fixed()`, `tidy_re()`, `tidy_smooth()` extract estimated coefficients / smooth effects and CIs as clean `data.frames` for visualization
 - `gg_fixed()`, `gg_smooth()`, `gg_slice()`, ... etc for direct `ggplot2` viz of estimates
 
 
@@ -36,8 +35,9 @@ Also merges additional datasets for time-dependent covariates according to the s
 ---
 # Beyond (mgcv) GAMMs
 
-Here we focused on GAMMs as backend for computation (which makes sense!), however, in some situation another backend might be advantageous, e.g.
+Here we focused on **`mgcv`** GAMMs as backend for computation (which makes sense!), however, in some situation another backend might be advantageous, e.g.
 
+- **`gamm4`**: For GAMMs with more flexible random effects
 - **`scam`**: GAMMs with monotonicity constraints
 - **`brms`**: Fully Bayesian estimation of (hierarchical) GAMMs
 - **`mboost`**: Boosting GAMMs for automated variable/term selection
@@ -47,15 +47,4 @@ Most of the functionality of **`pammtools`**, especially data trafo can be used 
 
 Some adjustments w.r.t. to post-processing might be necessary
 
-
----
-# Beyond Statistical Modeling
-
-In general, PEM based approaches not limited to statistical modeling (cf. `r Citet(bib, "bender.generalMl.2021")`)
-
-
-.center[
-<img src="figures/ml-for-survival-graph.svg", width = "800px">
-]
-
-
+Contributions are welcome!

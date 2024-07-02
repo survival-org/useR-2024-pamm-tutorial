@@ -24,7 +24,7 @@ where the baseline hazard is written as $\beta_{0,k,e} + f_{0,k,e}(t)$. <br>
 We now want to estimate both $h_0(t)$ as well as the parameters
 $\bsbeta$ via ML.
 
-**Why piecewise?** 
+**Why piecewise?**
 - Decompose the time axis into intervals
 - Assume piecewise constant hazards in these intervals
 
@@ -213,77 +213,38 @@ Note: Often interval endpoints are event times.
 
 ---
 # Use `pammtools` to get from survival data to illustrations
-```{r, est-pem, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("sim-wb", "ex-pem-1")}
-ped2 <- as_ped(Surv(time, status)~., cut = seq(0,10, by=.1), data=sim_df_weibull)
-pem2 <- glm(ped_status ~ interval, data = ped2, family=poisson(), offset=offset)
-pem_haz_df2 <- int_info(ped2) %>%
-  mutate(offset = intlen) %>%
-  mutate(
-    hazard = predict(object=pem2, ., type="response"),
-    survival = exp(-cumsum(hazard * intlen)))
-p_pem_haz2 <- p_pem_haz %+% pem_haz_df2 + ylim(c(0, .35))
-```
-
-```{r, est-pam, echo=FALSE, fig.width = 6, fig.height=3, dependson=c("est-pem")}
-pam <- mgcv::gam(ped_status ~ s(tend), data = ped2, family=poisson(), offset=offset)
-pem_haz_df2 <- pem_haz_df2 |> add_hazard(pam, overwrite = TRUE)
-p_pam_haz <- p_pem_haz %+% pem_haz_df2 +
-  geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) + ylim(c(0, .35))
-```
-
-```{r, echo=FALSE, fig.width = 6, fig.height = 6, dependson=c("est-pam"), out.width = "800px"}
-p_pam_haz_plot <- p_pam_haz + ggtitle("PAM")
-```
-
-```{r mgus-haz-df, echo=FALSE}
-data(mgus1, package="survival")
-mgus1_clean <- mgus1 |> filter(event == "pcm")
-mgus1_ped <- as_ped(data=mgus1_clean, 
-                   Surv(stop, status) ~ .)
-pam <- mgcv::gam(ped_status ~ s(tend), 
-                 data= mgus1_ped, 
-                 family=poisson(), 
-                 offset = offset)
-mgus_haz_df <- int_info(mgus1_ped) |> 
-  mutate(offset = intlen) |> 
-  add_hazard(pam) 
-```
 
 .pull-left[
-Example (Baseline): Monoclonal gammopathy data `mgus` from the `survival` package
-- 241 observations
-- `status`: 0/1 for censoring or interval ends in an event, here plasma cell malignancy
-- `stop`: days from diagnosis to event
+Example (Baseline): Survival data of tumor patients after operation `tumor` from the `pammtools` package
+- 776 observations
+- `status`: 0/1 for censoring or death
+- `days`: days from operation to event
 
 ```{r, echo=TRUE, eval=FALSE}
-data(mgus1, package="survival")
-mgus1_clean <- mgus1 |> filter(event == "pcm")
-mgus1_ped <- as_ped(data=mgus1_clean, 
-                   Surv(stop, status) ~ .)
-pam <- mgcv::gam(ped_status ~ s(tend), 
-                 data= mgus1_ped, 
-                 family=poisson(), 
-                 offset = offset)
-mgus_haz_df <- int_info(mgus1_ped) |> 
-  mutate(offset = intlen) |> 
-  add_hazard(pam) 
+data(tumor, package="survival")
+tumor_ped <- tumor |> as_ped(Surv(days, status)~.)
+pam <- mgcv::gam(
+  formula = ped_status ~ s(tend), data=tumor_ped,
+  family=poisson(),offset = offset)
+# shorter
+pam <- pamm(ped_status ~ s(tend), data = tumor_ped)
+haz_df <- tumor_ped |>
+  make_newdata(tend = unique(tend)) |>
+  add_hazard(pam)
 ```
 ]
 
 .pull-right[
 ```{r, echo=FALSE, eval=TRUE, dependson=c("mgus-haz-df"), fig.width=5, fig.height=3, out.width="500px"}
-ggplot(mgus_haz_df, aes(x = tend, y=hazard)) +
-  geom_line() + ylim(c(0, 0.001)) + xlim(c(0,9000)) +
+ggplot(haz_df, aes(x=tend, y=hazard)) +
+  geom_line() +
   geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) + xlab("time")
 ```
 
 ```{r, echo=TRUE, eval=FALSE}
-ggplot(mgus_haz_df, aes(x = tend, y=hazard)) +
+ggplot(haz_df, aes(x=tend, y=hazard)) +
   geom_line() +
-  geom_stepribbon(aes(ymin = ci_lower, 
-                      ymax= ci_upper)
-                  , alpha = .3) + 
-  xlab("time") + 
-  ylim(c(0, 0.001)) + xlim(c(0,9000))
+  geom_stepribbon(aes(ymin = ci_lower, ymax= ci_upper), alpha = .3) +
+  xlab("time")
 ```
 ]

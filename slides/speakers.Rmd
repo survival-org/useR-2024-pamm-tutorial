@@ -11,7 +11,7 @@
   - M.Sc Mathematics @ TU Munich (2020)
   - Asistant Manager @ KPMG (2020-2023)
   - nowadays: Doctoral Candidate @ LMU Munich, Multi-State Survival Analysis,
-    Statistical Consulting  
+    Statistical Consulting
 ]
 
 .pull-right[
@@ -37,8 +37,4 @@
   - R packages: **`coalitions`**, **`pammtools`**, **`mlr3proba`**
   - nowadays: (ML-/DL-based) Survival Analysis, Statistical and Machine Learning Consulting, Open Science
 
-]
-
-.pull-right[
-![](figures/ab.jpg)
 ]

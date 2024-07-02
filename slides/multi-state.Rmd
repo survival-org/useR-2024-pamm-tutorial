@@ -29,17 +29,19 @@ prothr |> filter(id == 46) |> knitr::kable() # example patients
 # Multi-State - Example: Abnormal prothrombin levels in liver cirrhosis (2)
 
 ```{r, echo = FALSE}
-prothr <- prothr %>% 
+data("prothr", package = "mstate")
+prothr <- prothr %>%
   rename(tstart = Tstart, tstop = Tstop) %>%
   filter(tstart != tstop)
 ```
 
 First, use `add_counterfactual_transitions` to add all possible transitions at each point in time:
+
 ```{r lib-ms-pammtools, echo = FALSE}
 # load function as it is not yet included in the package
-devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
-source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/R/add-functions.R")
-source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/tmp/add_transition_probabilities.R")
+#devtools::load_all("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools")
+#source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/R/add-functions.R")
+#source("C:/Users/ra63liw/Documents/98_git/pammtools-multi-state/pammtools/tmp/add_transition_probabilities.R")
 
 library(tidyverse)
 ```
@@ -54,7 +56,7 @@ ped <- as_ped_multistate(
   formula    = Surv(tstart, tstop, status)~ .,
   transition = "transition",
   id         = "id",
-  timescale  = "calendar", 
+  timescale  = "calendar",
   tdc_specials="concurrent"
 )
 ```
@@ -85,23 +87,24 @@ summary(pam)
 
 First, use `make_newdata` to create the data set for prediction:
 ```{r, echo = TRUE}
-ndf <- make_newdata(ped
-        , tend  = unique(tend), treat  = unique(treat), transition = unique(transition))
+ndf <- make_newdata(ped, tend  = unique(tend), treat  = unique(treat), transition = unique(transition))
 ```
 
-Second, use `add_cumu_hazard` to calculate the cumulative hazards
-```{r echo = TRUE}
+Second, use `add_trans_prob` to calculate the cumulative hazards
+```{r echo = TRUE, eval = FALSE}
 ndf <- ndf |>
   group_by(treat, transition) |> # important!
-  add_cumu_hazard(pam) 
+  add_trans_prob(pam)
 ```
+```{r echo = FALSE}
+ndf <- ndf |>
+  group_by(treat, transition) |> #important!
+  add_cumu_hazard(pam)
 
-Third, use `add_trans_prob` to calculate the transition probabilities including back-transitions
-```{r echo = TRUE, dependson=c("lib-ms-pammtools")}
 old_groups <- dplyr::groups(ndf) # save old groups before ungrouping data
 ndf_ungr <- ndf |> ungroup(transition) # probabilities differ for each transition
 ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability based on cumu hazards
-  map(ndf_ungr, .f = ~ group_by(.x, transition)) |> 
+  map(ndf_ungr, .f = ~ group_by(.x, transition)) |>
   map(ndf_ungr, .f = ~ add_trans_prob(.x)) |>
   map(ndf_ungr, .f = ~ group_by(.x, !!!old_groups)) |>
   bind_rows()
@@ -114,7 +117,7 @@ ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability b
 
 ```{r prothr-viz, echo = TRUE, fig.width = 8, fig.height = 4, out.width = "800px"}
 # visualization
-ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(~transition) + 
+ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(~transition) +
   labs(y = "Transition Probability", x = "time", color = "Treatment", fill= "Treatment")
 ```
 
@@ -124,7 +127,6 @@ ggplot(ndf, aes(x=tend, y=trans_prob)) + geom_line(aes(col=treat)) + facet_wrap(
 ```{r prothr-viz, echo = FALSE, fig.width = 8, fig.height = 4, out.width = "600px"}
 ```
 
-- Prednisone treatment reduces the transition probability into the death and abnormal prothrombin levels state
-- Differences between probabilities is small (Confidence Intervalls soon to be implemented)
+- Prednisone treatment slightly reduces the transition probability into the death and abnormal prothrombin levels state
+- Differences between probabilities is small (Confidence Intervalls soon to be implemented) <br>
 $\implies$ only minor effect of Prednisone compared to Placebo
-
