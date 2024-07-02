@@ -105,7 +105,7 @@ old_groups <- dplyr::groups(ndf) # save old groups before ungrouping data
 ndf_ungr <- ndf |> ungroup(transition) # probabilities differ for each transition
 ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability based on cumu hazards
   map(ndf_ungr, .f = ~ group_by(.x, transition)) |>
-  map(ndf_ungr, .f = ~ add_trans_prob(.x)) |>
+  map(ndf_ungr, .f = ~ pammtools:::add_trans_prob(.x)) |>
   map(ndf_ungr, .f = ~ group_by(.x, !!!old_groups)) |>
   bind_rows()
 ```

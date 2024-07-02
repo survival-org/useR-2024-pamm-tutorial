@@ -221,7 +221,7 @@ ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
 ]
 .pull-right[
 
-```{r, echo =FALSE, fig.height = 8, fig.width = 6, warning = FALSE, out.height = "600px"}
+```{r, echo =FALSE, fig.height = 6, fig.width = 8, warning = FALSE, out.height = "500px"}
 tumor_ped <- tumor |> as_ped(Surv(days, status)~.)
 pam_tumor2 <- pamm(ped_status ~ s(tend, by = complications), data = tumor_ped)
 ndf_tumor <- tumor_ped |> make_newdata(tend = unique(tend), complications = unique(complications)) |>
@@ -321,7 +321,7 @@ old_groups <- dplyr::groups(ndf) # save old groups before ungrouping data
 ndf_ungr <- ndf |> ungroup(transition) # probabilities differ for each transition
 ndf <- group_split(ndf_ungr) |> # pipeline to calculate transition probability based on cumu hazards
   map(ndf_ungr, .f = ~ group_by(.x, transition)) |>
-  map(ndf_ungr, .f = ~ add_trans_prob(.x)) |>
+  map(ndf_ungr, .f = ~ pammtools:::add_trans_prob(.x)) |>
   map(ndf_ungr, .f = ~ group_by(.x, !!!old_groups)) |>
   bind_rows()
 ```
