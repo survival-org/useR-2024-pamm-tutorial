@@ -196,6 +196,7 @@ Randomised trial of survival times under two treatment regimens for lung cancer
 - variables of interest:  `karno` Karnovsky performance score (consider as TVE), `trt` treatment (standard = 1, test = 0), `prior` prior therapy (no = 0, yes = 10)
 ]
 .pull-right[
+
 ```{r, echo =FALSE, fig.height = 3, fig.width = 5, out.width= "500px"}
 term_df <- veteran_ped |> ped_info() |> add_term(vet_pam_tve, term = "karno") |>
   mutate_at(c("fit", "ci_lower", "ci_upper"), funs(. / .data$karno)) |>
@@ -221,6 +222,7 @@ ggplot(term_df, aes(x = tend, y = fit)) + geom_step(aes(col = "PAM spline")) +
 .pull-right[
 
 ```{r, echo =FALSE, fig.height = 8, fig.width = 6, warning = FALSE, out.height = "600px"}
+tumor_ped <- tumor |> as_ped(Surv(days, status)~.)
 pam_tumor2 <- pamm(ped_status ~ s(tend, by = complications), data = tumor_ped)
 ndf_tumor <- tumor_ped |> make_newdata(tend = unique(tend), complications = unique(complications)) |>
   group_by(complications) |>

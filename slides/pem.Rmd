@@ -220,8 +220,8 @@ Example (Baseline): Survival data of tumor patients after operation `tumor` from
 - `status`: 0/1 for censoring or death
 - `days`: days from operation to event
 
-```{r, echo=TRUE, eval=FALSE}
-data(tumor, package="survival")
+```{r, echo=TRUE, eval=TRUE}
+data(tumor, package="pammtools")
 tumor_ped <- tumor |> as_ped(Surv(days, status)~.)
 pam <- mgcv::gam(
   formula = ped_status ~ s(tend), data=tumor_ped,
